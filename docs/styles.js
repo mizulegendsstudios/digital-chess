@@ -277,7 +277,7 @@ function startAnimations() {
             uiPanel.classList.add('visible');
             
             // Animar elementos internos
-            const uiElements = uiPanel.querySelectorAll('.kamisama-title, .time-display, .game-info, #game-status, #captured-pieces, #restart-button, #move-history');
+            const uiElements = uiPanel.querySelectorAll('.panel-element');
             uiElements.forEach((el, index) => {
                 setTimeout(() => {
                     el.classList.add('visible');
@@ -293,7 +293,7 @@ function startAnimations() {
             multiplayerPanel.classList.add('visible');
             
             // Animar elementos internos
-            const mpElements = multiplayerPanel.querySelectorAll('.connection-status, .player-role, .input-group, #create-room-button, #join-room-button, #room-info');
+            const mpElements = multiplayerPanel.querySelectorAll('.panel-element');
             mpElements.forEach((el, index) => {
                 setTimeout(() => {
                     el.classList.add('visible');
