@@ -13,7 +13,7 @@
 
 ## 🌐 Demo en vivo
 
-👉 [Enlace a la demo (pendiente)](https://mizulegendsstudios.github.io/digital-chess/)
+👉 [Enlace a la demo](https://mizulegendsstudios.github.io/digital-chess/)
 
 ---
 
