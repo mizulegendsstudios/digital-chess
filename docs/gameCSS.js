@@ -268,6 +268,17 @@ function injectCSS(cssText, id) {
     });
 }
 
+// Función para cargar un script externo
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = () => resolve(`Script ${src} cargado`);
+        script.onerror = () => reject(new Error(`Error al cargar ${src}`));
+        document.head.appendChild(script);
+    });
+}
+
 // Función para iniciar animaciones
 function startAnimations() {
     // Animar panel UI
@@ -308,6 +319,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Inyectar CSS principal
     injectCSS(gameCSS, 'game-styles')
         .then(() => {
+            // Cargar el script que inyecta el contenido del body
+            return loadScript('body-content.js');
+        })
+        .then(() => {
+            // Ahora que el script está cargado, podemos llamar a la función
+            return injectBodyContent();
+        })
+        .then(() => {
             // Preparar elementos para animación
             const uiPanel = document.getElementById('ui');
             const multiplayerPanel = document.getElementById('multiplayer-panel');
@@ -328,6 +347,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Iniciar animaciones
             startAnimations();
+            
+            // Ahora que el body está inyectado, podemos cargar el script del juego
+            return loadScript('chess-game.js');
+        })
+        .then(() => {
+            console.log('Todos los recursos cargados correctamente');
         })
         .catch(console.error);
 });
