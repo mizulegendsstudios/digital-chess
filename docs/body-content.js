@@ -1,71 +1,72 @@
-// body-content.js
-function injectBodyContent() {
-    return new Promise((resolve, reject) => {
-        try {
-            console.log("Inyectando contenido del body...");
-            
-            // Limpiar el body primero
-            document.body.innerHTML = '';
-            
-            // Crear el canvas del juego
-            const canvas = document.createElement('canvas');
-            canvas.id = 'gameCanvas';
-            document.body.appendChild(canvas);
-            console.log("Canvas creado");
-            
-            // Crear panel UI
-            const uiPanel = document.createElement('div');
-            uiPanel.id = 'ui';
-            uiPanel.innerHTML = `
-                <div class="kamisama-title">KAMISAMA CHESS</div>
-                <div class="time-display">Tiempo: 00:00</div>
-                <div class="game-info">
-                    <div class="turn-indicator">
-                        <span>Turno: </span>
-                        <span class="turn-indicator-white">Blancas</span>
-                    </div>
+// Este archivo contiene el HTML que se inyectará en el body
+module.exports = `
+    <div id="ui" class="animate-in">
+        <div class="kamisama-title panel-element">
+            <h2>♔ Kamisama Chess ♚</h2>
+        </div>
+        <div id="controls" class="panel-element">
+            <h3>🎮 Controles</h3>
+            <p><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span> Mover cámara</p>
+            <p><span class="key">Q</span><span class="key">E</span> Subir/Bajar</p>
+            <p><span class="key">R</span><span class="key">F</span> Rotar vista</p>
+            <p><span class="key">Shift</span> Acelerar</p>
+            <p><span class="key">Mouse</span> Seleccionar pieza</p>
+            <p><span class="key">Scroll</span> Zoom</p>
+        </div>
+        <div id="info" class="panel-element">
+            <p>FPS: <span id="fps">60</span></p>
+            <p>Vóxeles: <span id="voxelCount">0</span></p>
+            <div class="time-display">
+                <p>🌅 Día: <span id="dayTime">Día</span></p>
+                <p>⏰ Hora: <span id="timeDisplay">12:00</span></p>
+            </div>
+            <div class="game-info">
+                <div class="turn-indicator">
+                    Turno: <span id="current-turn" class="turn-indicator-white">Blancas</span>
                 </div>
                 <div id="game-status">Juego en curso</div>
                 <div id="captured-pieces">
-                    <div class="captured-white">Blancas capturadas: 0</div>
-                    <div class="captured-black">Negras capturadas: 0</div>
+                    <p>Capturadas:</p>
+                    <p class="captured-white">Blancas: <span id="captured-white">Ninguna</span></p>
+                    <p class="captured-black">Negras: <span id="captured-black">Ninguna</span></p>
                 </div>
                 <button id="restart-button">Reiniciar Juego</button>
-                <div id="move-history"></div>
-            `;
-            document.body.appendChild(uiPanel);
-            console.log("Panel UI creado");
-            
-            // Crear panel multijugador
-            const multiplayerPanel = document.createElement('div');
-            multiplayerPanel.id = 'multiplayer-panel';
-            multiplayerPanel.innerHTML = `
-                <div class="kamisama-title">MULTIJUGADOR</div>
-                <div class="connection-status status-disconnected">Desconectado</div>
-                <div class="player-role role-spectator">Espectador</div>
-                <div class="input-group">
-                    <label>Tu ID:</label>
-                    <input type="text" id="peer-id-input" readonly>
+                <div id="move-history">
+                    <p><strong>Movimientos:</strong></p>
+                    <div id="moves-list"></div>
                 </div>
-                <div class="input-group">
-                    <label>ID del host:</label>
-                    <input type="text" id="host-id-input" placeholder="Ingresa ID del host">
-                </div>
-                <div class="input-group">
-                    <label>Código de sala:</label>
-                    <input type="text" id="room-code-input" placeholder="Ingresa código de sala">
-                </div>
-                <button id="create-room-button">Crear Sala</button>
-                <button id="join-room-button">Unirse a Sala</button>
-                <div id="room-info"></div>
-            `;
-            document.body.appendChild(multiplayerPanel);
-            console.log("Panel multijugador creado");
-            
-            resolve('Contenido del body inyectado correctamente');
-        } catch (error) {
-            console.error('Error al inyectar contenido del body:', error);
-            reject(error);
-        }
-    });
-}
+            </div>
+        </div>
+    </div>
+
+    <div id="multiplayer-panel" class="animate-in">
+        <h3 class="panel-element">🌐 Multijugador</h3>
+        <div id="connection-status" class="connection-status status-disconnected panel-element">
+            Desconectado
+        </div>
+
+        <div id="connection-controls" class="panel-element">
+            <div class="input-group">
+                <label>Tu ID:</label>
+                <input type="text" id="peer-id-input" placeholder="Tu ID (se genera automáticamente)" readonly>
+            </div>
+            <button id="create-room-button">Crear Sala</button>
+            <div class="input-group">
+                <label>ID del Host:</label>
+                <input type="text" id="host-id-input" placeholder="ID del host">
+            </div>
+            <div class="input-group">
+                <label>Código de Sala:</label>
+                <input type="text" id="room-code-input" placeholder="Código de sala">
+            </div>
+            <button id="join-room-button">Unirse a Sala</button>
+        </div>
+
+        <div id="room-info" class="panel-element">
+            <p><strong>Sala:</strong> <span id="room-code-display">-</span></p>
+            <div id="player-role" class="player-role role-spectator">
+                Rol: Espectador
+            </div>
+        </div>
+    </div>
+`;
