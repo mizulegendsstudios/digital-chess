@@ -1,6 +1,6 @@
 
 
-# ♔ Kamisama Chess - Ajedrez Voxel 3D (Multijugador)
+# ♔ Voxel Chess - Ajedrez Digital 3D (Multijugador)
 
     "Juego de ajedrez 3D con piezas voxelizadas, sistema de día/noche dinámico y capacidad multijugador en tiempo real. Construido con Three.js y PeerJS para una experiencia inmersiva sin necesidad de servidores dedicados."
 
