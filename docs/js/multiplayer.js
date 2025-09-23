@@ -1,38 +1,33 @@
-// Variables multijugador
-let peer = null;
-let isHost = false;
-let roomCode = null;
-const connections = {};
-let localPeerId = null;
-let myRoleLocal = 'spectator';
+// Eliminar la declaración de variables multijugador aquí
+// Ya están declaradas en config.js y expuestas en window
 
 // Inicializar PeerJS
 function initializePeer() {
     return new Promise((resolve, reject) => {
-        if (peer && peer.id) return resolve(peer.id);
+        if (window.peer && window.peer.id) return resolve(window.peer.id);
         
-        peer = new Peer();
+        window.peer = new Peer();
         
-        peer.once('open', id => {
-            localPeerId = id;
+        window.peer.once('open', id => {
+            window.localPeerId = id;
             document.getElementById('peer-id-input').value = id;
             console.log('Peer abierto con id:', id);
             resolve(id);
         });
         
-        peer.once('error', err => {
+        window.peer.once('error', err => {
             console.error('Peer error', err);
             reject(err);
         });
         
         // Cuando otro peer se conecta a mí (si soy host), setup handlers
-        peer.on('connection', (conn) => {
+        window.peer.on('connection', (conn) => {
             console.log('peer.on(connection) -> incoming from', conn.peer, conn.metadata);
             
             conn.once('open', () => {
                 // Si este peer es host, validar roomCode
-                if (isHost) {
-                    if (!conn.metadata || conn.metadata.roomCode !== roomCode) {
+                if (window.isHost) {
+                    if (!conn.metadata || conn.metadata.roomCode !== window.roomCode) {
                         console.log('Código inválido o metadata faltante - cerrando conexión entrante');
                         conn.send({ type: 'error', reason: 'invalid-room-code' });
                         conn.close();
@@ -56,13 +51,13 @@ function initializePeer() {
 // Configurar manejadores de conexión
 function setupConnectionHandlers(conn) {
     const pid = conn.peer;
-    connections[pid] = conn;
+    window.connections[pid] = conn;
     
     conn.on('data', (data) => handleIncoming(conn, data));
     
     conn.on('close', () => {
         console.log('Conexión cerrada con', pid);
-        delete connections[pid];
+        delete window.connections[pid];
         refreshConnectionUI();
     });
     
@@ -76,7 +71,7 @@ function setupConnectionHandlers(conn) {
 
 // Enviar mensaje a todas las conexiones
 function broadcast(obj) {
-    Object.values(connections).forEach(c => {
+    Object.values(window.connections).forEach(c => {
         try { 
             if (c.open) c.send(obj); 
         } catch(e) { 
@@ -414,8 +409,8 @@ function handleIncoming(conn, data) {
             
         case 'role-assignment':
             // cliente recibe rol asignado
-            if (!isHost) { 
-                myRoleLocal = data.role; 
+            if (!window.isHost) { 
+                window.myRoleLocal = data.role; 
                 updatePlayerRole(data.role); 
                 console.log('Role assigned:', data.role); 
             }
@@ -428,7 +423,7 @@ function handleIncoming(conn, data) {
             
         case 'request-move':
             // SOLO el host debe procesar request-move
-            if (!isHost) {
+            if (!window.isHost) {
                 // clientes ignoran o reenvían? ignorar
                 return;
             }
@@ -453,7 +448,7 @@ function handleIncoming(conn, data) {
             
         case 'restart':
             // host o cliente solicita reinicio - host debe reiniciar estado y difundir
-            if (isHost) { 
+            if (window.isHost) { 
                 restartGameHost(); 
             }
             break;
@@ -507,7 +502,7 @@ function handleRequestMoveFromClient(conn, moveRequest) {
 // Solicitar movimiento al host
 function requestMoveToHost(piece, toRow, toCol) {
     // encontrar conexión host (asumimos primera conexión es host)
-    const hostConn = Object.values(connections)[0];
+    const hostConn = Object.values(window.connections)[0];
     if (!hostConn || !hostConn.open) { 
         alert('No conectado al host'); 
         return; 
@@ -529,7 +524,7 @@ function requestMoveToHost(piece, toRow, toCol) {
 function updatePlayerRole(role) {
     const roleEl = document.getElementById('player-role');
     document.getElementById('room-info').style.display = 'block';
-    document.getElementById('room-code-display').textContent = roomCode || '-';
+    document.getElementById('room-code-display').textContent = window.roomCode || '-';
     
     roleEl.classList.remove('role-white', 'role-black', 'role-spectator');
     
@@ -551,7 +546,7 @@ function updatePlayerRole(role) {
 // Reiniciar juego como host
 function restartGameHost() {
     // solo el host debe reiniciar y difundir estado completo
-    if (!isHost) return;
+    if (!window.isHost) return;
     
     // eliminar meshes de piezas
     const pieceMeshes = window.scene.children.filter(c => c.userData.type === 'piece');
@@ -620,10 +615,10 @@ function updateConnectionStatus(status, message) {
 
 // Actualizar UI de conexiones
 function refreshConnectionUI() {
-    const anyOpen = Object.values(connections).some(c => c.open);
+    const anyOpen = Object.values(window.connections).some(c => c.open);
     if (anyOpen) {
         updateConnectionStatus('connected', 'Conectado');
-    } else if (isHost) {
+    } else if (window.isHost) {
         updateConnectionStatus('connecting', 'Esperando jugador...');
     } else {
         updateConnectionStatus('disconnected', 'Desconectado');
@@ -634,14 +629,14 @@ function refreshConnectionUI() {
 function createRoom() {
     initializePeer()
         .then(() => {
-            isHost = true;
-            roomCode = Math.random().toString(36).substring(2,8).toUpperCase();
-            document.getElementById('room-code-display').textContent = roomCode;
+            window.isHost = true;
+            window.roomCode = Math.random().toString(36).substring(2,8).toUpperCase();
+            document.getElementById('room-code-display').textContent = window.roomCode;
             document.getElementById('room-info').style.display = 'block';
             updateConnectionStatus('connecting', 'Esperando jugador...');
-            myRoleLocal = 'white';
+            window.myRoleLocal = 'white';
             updatePlayerRole('white');
-            console.log('Sala creada. Peer ID:', localPeerId, 'Room code:', roomCode);
+            console.log('Sala creada. Peer ID:', window.localPeerId, 'Room code:', window.roomCode);
         })
         .catch(err => {
             console.error('Error initializing peer for host', err);
@@ -661,11 +656,11 @@ function joinRoom() {
     
     initializePeer()
         .then(() => {
-            roomCode = code;
-            isHost = false;
+            window.roomCode = code;
+            window.isHost = false;
             
             // conectar al host con metadata conteniendo código de sala solicitado
-            const conn = peer.connect(hostPeerId, { metadata: { roomCode: code } });
+            const conn = window.peer.connect(hostPeerId, { metadata: { roomCode: code } });
             
             conn.on('open', () => {
                 console.log('Conexión abierta con host', hostPeerId);
@@ -689,11 +684,11 @@ function joinRoom() {
 
 // Manejar reinicio
 function handleRestart() {
-    if (isHost) {
+    if (window.isHost) {
         restartGameHost();
     } else {
         // Si es cliente, solicitar reinicio al host
-        const hostConn = Object.values(connections)[0];
+        const hostConn = Object.values(window.connections)[0];
         if (hostConn && hostConn.open) {
             hostConn.send({ type: 'restart' });
         }
