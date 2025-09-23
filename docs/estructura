@@ -1,0 +1,15 @@
+/
+├── index.html
+├── js/
+│   ├── loader.js
+│   ├── styles.js
+│   ├── body-content.js
+│   ├── config.js
+│   ├── sceneManager.js
+│   ├── boardBuilder.js
+│   ├── pieceFactory.js
+│   ├── gameLogic.js
+│   ├── inputHandler.js
+│   ├── multiplayer.js
+│   └── game.js
+└── 
