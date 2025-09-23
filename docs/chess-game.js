@@ -1,3 +1,6 @@
+// Aquí va todo el código JavaScript del juego original
+// (Todo el código que estaba dentro de la etiqueta <script> en tu HTML original)
+
 // Configuración básica
 const scene = new THREE.Scene();
 scene.fog = new THREE.Fog(0x87CEEB, 10, 100);
@@ -407,7 +410,6 @@ function createPiece(type, color, row, col, meshCreator = true) {
                 );
                 crossVoxel.userData.pieceId = pieceId;
                 scene.add(crossVoxel);
-                voxels.push(crossVoxel);
                 voxelCount++;
             }
             for (let x = 0; x < 2; x++) {
@@ -420,7 +422,6 @@ function createPiece(type, color, row, col, meshCreator = true) {
                 );
                 crossVoxel.userData.pieceId = pieceId;
                 scene.add(crossVoxel);
-                voxels.push(crossVoxel);
                 voxelCount++;
             }
             break;
@@ -1226,7 +1227,7 @@ function applyFullState(state) {
     updateMoveHistory();
 }
 
-// CORRECCIÓN: Crear meshes para una pieza - ahora reproduce todas las formas correctamente
+// Crear meshes para una pieza
 function createPieceMeshes(piece) {
     const pieceColor = piece.color === 'white' ? 0xFFFFFF : 0x333333;
     const baseX = piece.col * 4 + 1 - 14;
