@@ -17,6 +17,22 @@ class InputHandler {
         this.mouseY = 0;
         this.isMouseDown = false;
         
+        // Variables para controles táctiles
+        this.touchStartX = 0;
+        this.touchStartY = 0;
+        this.touchEndX = 0;
+        this.touchEndY = 0;
+        this.lastTouchDistance = 0;
+        this.isTouching = false;
+        this.selectedPiece = null;
+        
+        // Variables para controles de TV/gamepad
+        this.gamepad = null;
+        this.gamepadIndex = null;
+        this.gamepadButtons = {};
+        this.gamepadAxes = [];
+        this.selectedSquare = { row: 4, col: 4 }; // Posición inicial del cursor
+        
         // Sistema de selección con el mouse
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
@@ -43,6 +59,15 @@ class InputHandler {
         document.addEventListener('click', (e) => this.onMouseClick(e));
         document.addEventListener('wheel', (e) => this.onMouseWheel(e));
         
+        // Eventos táctiles para dispositivos móviles
+        document.addEventListener('touchstart', (e) => this.onTouchStart(e));
+        document.addEventListener('touchmove', (e) => this.onTouchMove(e));
+        document.addEventListener('touchend', (e) => this.onTouchEnd(e));
+        
+        // Eventos de gamepad para TV y consolas
+        window.addEventListener('gamepadconnected', (e) => this.onGamepadConnected(e));
+        window.addEventListener('gamepaddisconnected', (e) => this.onGamepadDisconnected(e));
+        
         // Evento de reinicio - verificar si el elemento existe
         const restartButton = document.getElementById('restart-button');
         if (restartButton) {
@@ -50,12 +75,21 @@ class InputHandler {
         } else {
             console.warn('Elemento restart-button no encontrado en el DOM');
         }
+        
+        // Crear cursor visual para TV/gamepad
+        this.createTVCursor();
     }
     
+    // Métodos para controles de mouse
     onMouseMove(event) {
         if (this.isMouseDown) {
             this.mouseX = (event.clientX / window.innerWidth) * 2 - 1;
             this.mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            // Rotar cámara con el mouse
+            this.camera.rotation.y -= this.mouseX * this.lookSpeed;
+            this.camera.rotation.x -= this.mouseY * this.lookSpeed;
+            this.camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, this.camera.rotation.x));
         }
     }
     
@@ -108,11 +142,316 @@ class InputHandler {
     }
     
     onMouseWheel(event) {
+        event.preventDefault();
         if (event.deltaY < 0) {
             this.camera.position.multiplyScalar(1 - this.zoomSpeed);
         } else {
             this.camera.position.multiplyScalar(1 + this.zoomSpeed);
         }
+    }
+    
+    // Métodos para controles táctiles
+    onTouchStart(event) {
+        event.preventDefault();
+        if (event.touches.length === 1) {
+            this.touchStartX = event.touches[0].clientX;
+            this.touchStartY = event.touches[0].clientY;
+            this.isTouching = true;
+            
+            // Convertir coordenadas táctiles a coordenadas normalizadas
+            this.mouse.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
+            this.mouse.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
+            
+            // Verificar si se tocó una pieza
+            this.raycaster.setFromCamera(this.mouse, this.camera);
+            const selectableObjects = this.scene.children.filter(child => 
+                child.userData.type === 'piece' || child.userData.type === 'highlight'
+            );
+            const intersects = this.raycaster.intersectObjects(selectableObjects);
+            
+            if (intersects.length > 0) {
+                const touchedObject = intersects[0].object;
+                if (touchedObject.userData.type === 'piece') {
+                    const pieceId = touchedObject.userData.pieceId;
+                    const touchedPiece = this.gameLogic.pieces.find(piece => piece.id === pieceId);
+                    
+                    if (touchedPiece && touchedPiece.color === this.gameLogic.currentTurn) {
+                        this.selectedPiece = touchedPiece;
+                        this.gameLogic.selectPiece(touchedPiece);
+                        this.highlightValidMoves(this.gameLogic.validMoves);
+                    }
+                }
+            }
+        } else if (event.touches.length === 2) {
+            // Para zoom con dos dedos
+            const dx = event.touches[0].clientX - event.touches[1].clientX;
+            const dy = event.touches[0].clientY - event.touches[1].clientY;
+            this.lastTouchDistance = Math.sqrt(dx * dx + dy * dy);
+        }
+    }
+    
+    onTouchMove(event) {
+        event.preventDefault();
+        if (event.touches.length === 1 && this.isTouching) {
+            this.touchEndX = event.touches[0].clientX;
+            this.touchEndY = event.touches[0].clientY;
+            
+            // Calcular el desplazamiento
+            const deltaX = this.touchEndX - this.touchStartX;
+            const deltaY = this.touchEndY - this.touchStartY;
+            
+            // Si hay una pieza seleccionada, verificar si se quiere mover
+            if (this.selectedPiece) {
+                this.mouse.x = (event.touches[0].clientX / window.innerWidth) * 2 - 1;
+                this.mouse.y = -(event.touches[0].clientY / window.innerHeight) * 2 + 1;
+                
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+                const highlights = this.scene.children.filter(child => child.userData.type === 'highlight');
+                const intersects = this.raycaster.intersectObjects(highlights);
+                
+                if (intersects.length > 0) {
+                    const highlight = intersects[0].object;
+                    const col = Math.round((highlight.position.x + 14) / 4);
+                    const row = Math.round((highlight.position.z + 14) / 4);
+                    
+                    // Mover la pieza si es un movimiento válido
+                    if (this.gameLogic.isValidMove(this.selectedPiece, row, col)) {
+                        this.makeMove(this.selectedPiece, row, col);
+                        this.selectedPiece = null;
+                    }
+                }
+            } else {
+                // Rotar cámara con un dedo
+                this.camera.rotation.y -= deltaX * 0.005;
+                this.camera.rotation.x -= deltaY * 0.005;
+                this.camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, this.camera.rotation.x));
+                
+                // Actualizar posición inicial para el siguiente movimiento
+                this.touchStartX = this.touchEndX;
+                this.touchStartY = this.touchEndY;
+            }
+        } else if (event.touches.length === 2) {
+            // Zoom con dos dedos
+            const dx = event.touches[0].clientX - event.touches[1].clientX;
+            const dy = event.touches[0].clientY - event.touches[1].clientY;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (this.lastTouchDistance > 0) {
+                const deltaDistance = distance - this.lastTouchDistance;
+                const scaleFactor = 1 + deltaDistance * 0.01;
+                this.camera.position.multiplyScalar(scaleFactor);
+            }
+            
+            this.lastTouchDistance = distance;
+        }
+    }
+    
+    onTouchEnd(event) {
+        event.preventDefault();
+        this.isTouching = false;
+        
+        // Si no hay una pieza seleccionada, verificar si se tocó una casilla vacía
+        if (!this.selectedPiece && event.touches.length === 0) {
+            this.mouse.x = (this.touchEndX / window.innerWidth) * 2 - 1;
+            this.mouse.y = -(this.touchEndY / window.innerHeight) * 2 + 1;
+            
+            this.raycaster.setFromCamera(this.mouse, this.camera);
+            const boardObjects = this.scene.children.filter(child => 
+                child.userData.type === 'board' || child.userData.type === 'highlight'
+            );
+            const intersects = this.raycaster.intersectObjects(boardObjects);
+            
+            if (intersects.length > 0) {
+                const boardObject = intersects[0].object;
+                const col = Math.round((boardObject.position.x + 14) / 4);
+                const row = Math.round((boardObject.position.z + 14) / 4);
+                
+                // Verificar si hay una pieza en esa posición
+                const piece = this.gameLogic.board[row][col];
+                if (piece && piece.color === this.gameLogic.currentTurn) {
+                    this.selectedPiece = piece;
+                    this.gameLogic.selectPiece(piece);
+                    this.highlightValidMoves(this.gameLogic.validMoves);
+                }
+            }
+        }
+    }
+    
+    // Métodos para controles de TV/gamepad
+    onGamepadConnected(event) {
+        console.log('Gamepad conectado:', event.gamepad.id);
+        this.gamepad = event.gamepad;
+        this.gamepadIndex = event.gamepad.index;
+        this.updateTVCursorVisibility(true);
+    }
+    
+    onGamepadDisconnected(event) {
+        console.log('Gamepad desconectado:', event.gamepad.id);
+        this.gamepad = null;
+        this.gamepadIndex = null;
+        this.updateTVCursorVisibility(false);
+    }
+    
+    createTVCursor() {
+        // Crear un cursor visual para la navegación con gamepad
+        const cursorGeometry = new THREE.RingGeometry(1.8, 2.2, 32);
+        const cursorMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xffff00, 
+            transparent: true, 
+            opacity: 0.7,
+            side: THREE.DoubleSide
+        });
+        this.tvCursor = new THREE.Mesh(cursorGeometry, cursorMaterial);
+        this.tvCursor.rotation.x = -Math.PI / 2; // Horizontal
+        this.tvCursor.position.y = 0.7; // Ligeramente sobre el tablero
+        this.tvCursor.visible = false; // Inicialmente oculto
+        this.tvCursor.userData.type = 'tvCursor';
+        this.scene.add(this.tvCursor);
+    }
+    
+    updateTVCursorVisibility(visible) {
+        if (this.tvCursor) {
+            this.tvCursor.visible = visible;
+        }
+    }
+    
+    updateGamepad() {
+        if (this.gamepadIndex !== null) {
+            const gamepads = navigator.getGamepads();
+            const gamepad = gamepads[this.gamepadIndex];
+            
+            if (gamepad) {
+                // Actualizar estado de botones
+                for (let i = 0; i < gamepad.buttons.length; i++) {
+                    const button = gamepad.buttons[i];
+                    const wasPressed = this.gamepadButtons[i] || false;
+                    const isPressed = button.pressed;
+                    
+                    this.gamepadButtons[i] = isPressed;
+                    
+                    // Detectar flancos de subida (botón recién presionado)
+                    if (isPressed && !wasPressed) {
+                        this.handleGamepadButtonPress(i);
+                    }
+                }
+                
+                // Actualizar estado de ejes
+                this.gamepadAxes = gamepad.axes;
+                this.handleGamepadAxes();
+            }
+        }
+    }
+    
+    handleGamepadButtonPress(buttonIndex) {
+        switch (buttonIndex) {
+            case 0: // Botón A (seleccionar/mover)
+            case 1: // Botón B (deseleccionar)
+                this.handleTVCursorAction();
+                break;
+            case 2: // Botón X (reiniciar juego)
+                this.onRestartGame();
+                break;
+            case 3: // Botón Y (ver ayuda)
+                this.showHelp();
+                break;
+            case 9: // Botón Start (pausar)
+                this.togglePause();
+                break;
+        }
+    }
+    
+    handleGamepadAxes() {
+        // Ejes 0 y 1: stick izquierdo (movimiento del cursor)
+        const deadZone = 0.2;
+        const moveSpeed = 0.15;
+        
+        if (Math.abs(this.gamepadAxes[0]) > deadZone) {
+            this.selectedSquare.col += Math.sign(this.gamepadAxes[0]) * moveSpeed;
+            this.selectedSquare.col = Math.max(0, Math.min(this.boardSize - 1, this.selectedSquare.col));
+        }
+        
+        if (Math.abs(this.gamepadAxes[1]) > deadZone) {
+            this.selectedSquare.row += Math.sign(this.gamepadAxes[1]) * moveSpeed;
+            this.selectedSquare.row = Math.max(0, Math.min(this.boardSize - 1, this.selectedSquare.row));
+        }
+        
+        // Ejes 2 y 3: stick derecho (control de cámara)
+        if (Math.abs(this.gamepadAxes[2]) > deadZone) {
+            this.camera.rotation.y -= this.gamepadAxes[2] * 0.03;
+        }
+        
+        if (Math.abs(this.gamepadAxes[3]) > deadZone) {
+            this.camera.rotation.x -= this.gamepadAxes[3] * 0.03;
+            this.camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, this.camera.rotation.x));
+        }
+        
+        // Actualizar posición del cursor visual
+        if (this.tvCursor) {
+            const x = this.selectedSquare.col * 4 + 1 - 14;
+            const z = this.selectedSquare.row * 4 + 1 - 14;
+            this.tvCursor.position.set(x, this.tvCursor.position.y, z);
+        }
+    }
+    
+    handleTVCursorAction() {
+        // Obtener la pieza en la posición del cursor
+        const piece = this.gameLogic.board[Math.round(this.selectedSquare.row)][Math.round(this.selectedSquare.col)];
+        
+        if (this.gameLogic.selectedPiece) {
+            // Si hay una pieza seleccionada, intentar moverla a la posición del cursor
+            const targetRow = Math.round(this.selectedSquare.row);
+            const targetCol = Math.round(this.selectedSquare.col);
+            
+            if (this.gameLogic.isValidMove(this.gameLogic.selectedPiece, targetRow, targetCol)) {
+                this.makeMove(this.gameLogic.selectedPiece, targetRow, targetCol);
+            } else {
+                // Si el movimiento no es válido, deseleccionar
+                this.gameLogic.deselectPiece();
+                this.highlightValidMoves([]);
+            }
+        } else if (piece && piece.color === this.gameLogic.currentTurn) {
+            // Si no hay pieza seleccionada y hay una pieza del turno actual, seleccionarla
+            this.gameLogic.selectPiece(piece);
+            this.highlightValidMoves(this.gameLogic.validMoves);
+        }
+    }
+    
+    showHelp() {
+        // Mostrar un diálogo de ayuda
+        const helpDialog = document.getElementById('help-dialog');
+        if (helpDialog) {
+            helpDialog.style.display = 'block';
+            
+            // Cerrar después de unos segundos o con un botón
+            setTimeout(() => {
+                helpDialog.style.display = 'none';
+            }, 5000);
+        }
+    }
+    
+    togglePause() {
+        // Implementar lógica de pausa
+        const pauseOverlay = document.getElementById('pause-overlay');
+        if (pauseOverlay) {
+            const isVisible = pauseOverlay.style.display === 'block';
+            pauseOverlay.style.display = isVisible ? 'none' : 'block';
+            this.gameLogic.isPaused = !isVisible;
+        }
+    }
+    
+    updateCamera() {
+        // Controles de teclado
+        const speed = this.keys['shift'] ? this.moveSpeed * 2 : this.moveSpeed;
+        
+        if (this.keys['w']) this.camera.translateZ(-speed);
+        if (this.keys['s']) this.camera.translateZ(speed);
+        if (this.keys['a']) this.camera.translateX(-speed);
+        if (this.keys['d']) this.camera.translateX(speed);
+        if (this.keys['q']) this.camera.position.y += speed;
+        if (this.keys['e']) this.camera.position.y -= speed;
+        
+        if (this.keys['r']) this.camera.rotateX(-0.02);
+        if (this.keys['f']) this.camera.rotateX(0.02);
     }
     
     onRestartGame() {
@@ -271,28 +610,6 @@ class InputHandler {
         });
     }
     
-    updateCamera() {
-        // Controles de teclado
-        const speed = this.keys['shift'] ? this.moveSpeed * 2 : this.moveSpeed;
-        
-        if (this.keys['w']) this.camera.translateZ(-speed);
-        if (this.keys['s']) this.camera.translateZ(speed);
-        if (this.keys['a']) this.camera.translateX(-speed);
-        if (this.keys['d']) this.camera.translateX(speed);
-        if (this.keys['q']) this.camera.position.y += speed;
-        if (this.keys['e']) this.camera.position.y -= speed;
-        
-        if (this.keys['r']) this.camera.rotateX(-0.02);
-        if (this.keys['f']) this.camera.rotateX(0.02);
-        
-        // Controles de mouse
-        if (this.isMouseDown) {
-            this.camera.rotation.y -= this.mouseX * this.lookSpeed;
-            this.camera.rotation.x -= this.mouseY * this.lookSpeed;
-            this.camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, this.camera.rotation.x));
-        }
-    }
-    
     updateTurnIndicator() {
         const turnElement = document.getElementById('current-turn');
         if (turnElement) {
@@ -377,5 +694,12 @@ class InputHandler {
             frameCount = 0;
             lastTime = currentTime;
         }
+    }
+    
+    // Método para actualizar todos los controles en cada frame
+    update() {
+        this.updateCamera();
+        this.updateGamepad();
+        this.updateFPS();
     }
 }
