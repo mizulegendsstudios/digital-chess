@@ -1,6 +1,6 @@
 // js/loader/errorHandler.js
 
-// Función para mostrar errores en la interfaz de usuario
+// Función para mostrar errores en la interfaz de usuario-
 function showErrorToUser(error) {
     // Mostrar mensaje de error en la página
     const errorDiv = document.createElement('div');
