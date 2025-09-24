@@ -1,87 +1,118 @@
-// js/boardBuilder.js
-class BoardBuilder {
-    constructor(sceneManager) {
-        this.sceneManager = sceneManager;
-        this.scene = sceneManager.scene;
-        this.voxels = [];
-        this.voxelCount = 0;
-        this.board = [];
-        this.boardSize = Config.BOARD_SIZE;
-    }
-    
-    createVoxel(x, y, z, color, type = 'normal') {
-        const geometry = new THREE.BoxGeometry(Config.VOXEL_SIZE, Config.VOXEL_SIZE, Config.VOXEL_SIZE);
-        const material = new THREE.MeshPhongMaterial({ 
-            color: color,
-            shininess: 30
-        });
-        const voxel = new THREE.Mesh(geometry, material);
-        voxel.position.set(x, y, z);
-        voxel.castShadow = true;
-        voxel.receiveShadow = true;
-        voxel.userData.type = type;
-        return voxel;
-    }
-    
-    buildBoard() {
-        // Inicializar tablero
-        for (let row = 0; row < this.boardSize; row++) {
-            this.board[row] = [];
-            for (let col = 0; col < this.boardSize; col++) {
-                const isWhite = (row + col) % 2 === 0;
-                const color = isWhite ? Config.COLORS.WHITE_SQUARE : Config.COLORS.BLACK_SQUARE;
-                
-                // Crear casilla
-                for (let x = 0; x < 4; x++) {
-                    for (let z = 0; z < 4; z++) {
-                        const tileVoxel = this.createVoxel(
-                            col * 4 + x - 14, 
-                            0, 
-                            row * 4 + z - 14, 
-                            color, 
-                            'tile'
-                        );
-                        this.scene.add(tileVoxel);
-                        this.voxels.push(tileVoxel);
-                        this.voxelCount++;
-                    }
-                }
-                
-                // Crear borde del tablero
-                if (row === 0 || row === this.boardSize - 1 || col === 0 || col === this.boardSize - 1) {
-                    for (let x = -1; x <= 4; x++) {
-                        for (let z = -1; z <= 4; z++) {
-                            if (x === -1 || x === 4 || z === -1 || z === 4) {
-                                const borderVoxel = this.createVoxel(
-                                    col * 4 + x - 14, 
-                                    0, 
-                                    row * 4 + z - 14, 
-                                    Config.COLORS.BORDER, 
-                                    'border'
-                                );
-                                this.scene.add(borderVoxel);
-                                this.voxels.push(borderVoxel);
-                                this.voxelCount++;
-                            }
-                        }
-                    }
-                }
-                
-                this.board[row][col] = null;
-            }
-        }
-        
-        // Actualizar contador de voxels en la UI
-        document.getElementById('voxelCount').textContent = this.voxelCount;
-        
-        return this.board;
-    }
-    
-    getBoard() {
-        return this.board;
-    }
-    
-    getVoxelCount() {
-        return this.voxelCount;
+// js/loader.js
+// Array con los scripts a cargar en orden específico
+const scriptsToLoad = [
+    'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+    'https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js',
+    'js/config.js',
+    'js/styles.js',
+    'js/body-content.js',
+    'js/sceneManager.js',
+    'js/boardBuilder.js',
+    'js/pieceFactory.js',
+    'js/gameLogic.js',
+    'js/inputHandler.js',
+    'js/multiplayer.js',
+    'js/game.js'
+];
+
+// Función para cargar scripts de forma secuencial
+async function loadScriptsSequentially(scripts) {
+    for (const src of scripts) {
+        await loadScript(src);
     }
 }
+
+// Función para cargar un script individual
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        // Verificar si el script ya está cargado
+        if (document.querySelector(`script[src="${src}"]`)) {
+            console.log(`Script ya cargado: ${src}`);
+            resolve();
+            return;
+        }
+        
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = () => {
+            console.log(`Script cargado: ${src}`);
+            resolve();
+        };
+        script.onerror = () => {
+            console.error(`Error al cargar el script: ${src}`);
+            reject(new Error(`Error al cargar el script: ${src}`));
+        };
+        document.head.appendChild(script);
+    });
+}
+
+// Cargar estilos y contenido del cuerpo
+function injectStylesAndContent() {
+    console.log('Inyectando estilos y contenido...');
+    
+    // Cargar estilos
+    if (typeof injectStyles === 'function') {
+        injectStyles();
+        console.log('Estilos inyectados correctamente');
+    } else {
+        console.error('La función injectStyles no está disponible');
+    }
+    
+    // Cargar contenido del cuerpo
+    if (typeof injectBodyContent === 'function') {
+        injectBodyContent();
+        console.log('Contenido del cuerpo inyectado correctamente');
+    } else {
+        console.error('La función injectBodyContent no está disponible');
+    }
+}
+
+// Función principal para iniciar el juego
+async function initGame() {
+    try {
+        console.log('Iniciando carga del juego...');
+        
+        // Cargar todos los scripts necesarios
+        await loadScriptsSequentially(scriptsToLoad);
+        
+        console.log('Todos los scripts cargados correctamente');
+        
+        // Inyectar estilos y contenido del cuerpo
+        injectStylesAndContent();
+        
+        // Verificar que la clase Game esté disponible
+        if (typeof Game === 'undefined') {
+            throw new Error('La clase Game no está definida');
+        }
+        
+        // Crear e iniciar el juego
+        const game = new Game();
+        game.start();
+        
+        console.log('Juego iniciado correctamente');
+    } catch (error) {
+        console.error('Error al iniciar el juego:', error);
+        
+        // Mostrar mensaje de error en la página
+        const errorDiv = document.createElement('div');
+        errorDiv.style.color = 'red';
+        errorDiv.style.padding = '20px';
+        errorDiv.style.fontFamily = 'Arial, sans-serif';
+        errorDiv.style.position = 'fixed';
+        errorDiv.style.top = '0';
+        errorDiv.style.left = '0';
+        errorDiv.style.right = '0';
+        errorDiv.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+        errorDiv.style.color = 'white';
+        errorDiv.style.zIndex = '9999';
+        errorDiv.innerHTML = `
+            <h2>Error al cargar el juego</h2>
+            <p>${error.message}</p>
+            <p>Por favor, recarga la página para intentar de nuevo.</p>
+        `;
+        document.body.appendChild(errorDiv);
+    }
+}
+
+// Iniciar el juego cuando se cargue la página
+window.addEventListener('load', initGame);
