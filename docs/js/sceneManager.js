@@ -1,4 +1,9 @@
-// js/sceneManager.js
+// js/SceneManager.js
+import { LightingManager } from './SceneManager/LightingManager.js';
+import { SkyboxManager } from './SceneManager/SkyboxManager.js';
+import { DayNightCycle } from './SceneManager/DayNightCycle.js';
+import { UIManager } from './SceneManager/UIManager.js';
+
 class SceneManager {
     constructor() {
         this.scene = null;
@@ -7,6 +12,7 @@ class SceneManager {
         this.dayNightCycle = null;
         this.lightingManager = null;
         this.skyboxManager = null;
+        this.uiManager = null;
         this.init();
     }
     
@@ -18,10 +24,16 @@ class SceneManager {
         // Inicializar los gestores especializados
         this.lightingManager = new LightingManager(this.scene);
         this.skyboxManager = new SkyboxManager(this.scene);
+        this.uiManager = new UIManager();
+        
+        // El skyboxManager necesita una referencia al renderer
+        this.skyboxManager.setRenderer(this.renderer);
+        
         this.dayNightCycle = new DayNightCycle(
             this.scene, 
             this.lightingManager, 
-            this.skyboxManager
+            this.skyboxManager,
+            this.uiManager
         );
         
         window.addEventListener('resize', () => this.onWindowResize());
@@ -70,3 +82,5 @@ class SceneManager {
         this.dayNightCycle.update();
     }
 }
+
+export { SceneManager };
