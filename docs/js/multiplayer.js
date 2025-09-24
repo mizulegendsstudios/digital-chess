@@ -1,5 +1,6 @@
 // js/multiplayer.js
-class Multiplayer {
+// Asegurarnos de que no haya declaraciones duplicadas
+let MultiplayerClass = class Multiplayer {
     constructor(gameLogic, inputHandler, pieceFactory) {
         this.gameLogic = gameLogic;
         this.inputHandler = inputHandler;
@@ -19,9 +20,21 @@ class Multiplayer {
     }
     
     init() {
-        // Eventos de multijugador
-        document.getElementById('create-room-button').addEventListener('click', () => this.onCreateRoom());
-        document.getElementById('join-room-button').addEventListener('click', () => this.onJoinRoom());
+        // Eventos de multijugador - verificar que los elementos existan
+        const createRoomButton = document.getElementById('create-room-button');
+        const joinRoomButton = document.getElementById('join-room-button');
+        
+        if (createRoomButton) {
+            createRoomButton.addEventListener('click', () => this.onCreateRoom());
+        } else {
+            console.warn('Elemento create-room-button no encontrado en el DOM');
+        }
+        
+        if (joinRoomButton) {
+            joinRoomButton.addEventListener('click', () => this.onJoinRoom());
+        } else {
+            console.warn('Elemento join-room-button no encontrado en el DOM');
+        }
         
         // Mejorar la UI para facilitar la conexión
         this.improveConnectionUI();
@@ -30,14 +43,19 @@ class Multiplayer {
     // Método para mejorar la UI de conexión
     improveConnectionUI() {
         // Reorganizar el campo del ID del peer para que sea más visible
-        const peerIdGroup = document.querySelector('#peer-id-input').parentNode;
+        const peerIdInput = document.getElementById('peer-id-input');
+        if (!peerIdInput) {
+            console.warn('Elemento peer-id-input no encontrado en el DOM');
+            return;
+        }
+        
+        const peerIdGroup = peerIdInput.parentNode;
         
         // Crear un contenedor para el ID y el botón de copiar
         const peerIdContainer = document.createElement('div');
         peerIdContainer.className = 'peer-id-container';
         
         // Mover el input al nuevo contenedor
-        const peerIdInput = document.getElementById('peer-id-input');
         peerIdContainer.appendChild(peerIdInput);
         
         // Crear el botón de copiar
@@ -78,59 +96,69 @@ class Multiplayer {
         
         // Mejorar el campo del ID del host
         const hostIdInput = document.getElementById('host-id-input');
-        hostIdInput.title = 'Pega aquí el código completo (código de sala + ID del host)';
-        hostIdInput.placeholder = 'Pega el código completo aquí';
-        
-        // Añadir evento para procesar el pegado y separar automáticamente el código de sala y el ID del host
-        hostIdInput.addEventListener('paste', (event) => {
-            // Prevenir el comportamiento por defecto
-            event.preventDefault();
+        if (hostIdInput) {
+            hostIdInput.title = 'Pega aquí el código completo (código de sala + ID del host)';
+            hostIdInput.placeholder = 'Pega el código completo aquí';
             
-            // Obtener el texto pegado
-            const pastedText = (event.clipboardData || window.clipboardData).getData('text');
-            
-            // Procesar el texto para separar el código de sala y el ID del host
-            const { roomCode, hostId } = this.processPastedCode(pastedText);
-            
-            // Actualizar los campos correspondientes
-            if (roomCode) {
-                document.getElementById('room-code-input').value = roomCode;
-            }
-            
-            if (hostId) {
-                hostIdInput.value = hostId;
-            }
-            
-            // Mostrar un mensaje de confirmación
-            const originalPlaceholder = hostIdInput.placeholder;
-            hostIdInput.placeholder = 'Código procesado automáticamente';
-            hostIdInput.style.backgroundColor = 'rgba(0, 255, 0, 0.2)';
-            
-            setTimeout(() => {
-                hostIdInput.placeholder = originalPlaceholder;
-                hostIdInput.style.backgroundColor = '';
-            }, 2000);
-        });
+            // Añadir evento para procesar el pegado y separar automáticamente el código de sala y el ID del host
+            hostIdInput.addEventListener('paste', (event) => {
+                // Prevenir el comportamiento por defecto
+                event.preventDefault();
+                
+                // Obtener el texto pegado
+                const pastedText = (event.clipboardData || window.clipboardData).getData('text');
+                
+                // Procesar el texto para separar el código de sala y el ID del host
+                const { roomCode, hostId } = this.processPastedCode(pastedText);
+                
+                // Actualizar los campos correspondientes
+                if (roomCode) {
+                    const roomCodeInput = document.getElementById('room-code-input');
+                    if (roomCodeInput) {
+                        roomCodeInput.value = roomCode;
+                    }
+                }
+                
+                if (hostId) {
+                    hostIdInput.value = hostId;
+                }
+                
+                // Mostrar un mensaje de confirmación
+                const originalPlaceholder = hostIdInput.placeholder;
+                hostIdInput.placeholder = 'Código procesado automáticamente';
+                hostIdInput.style.backgroundColor = 'rgba(0, 255, 0, 0.2)';
+                
+                setTimeout(() => {
+                    hostIdInput.placeholder = originalPlaceholder;
+                    hostIdInput.style.backgroundColor = '';
+                }, 2000);
+            });
+        }
         
         // Mejorar el campo del código de sala
         const roomCodeInput = document.getElementById('room-code-input');
-        roomCodeInput.title = 'Ingresa el código de sala de 5 caracteres';
-        roomCodeInput.placeholder = 'Código de sala (ej: ABCDE)';
-        roomCodeInput.style.textTransform = 'uppercase';
-        
-        // Añadir evento para convertir automáticamente a mayúsculas
-        roomCodeInput.addEventListener('input', function() {
-            this.value = this.value.toUpperCase();
-        });
+        if (roomCodeInput) {
+            roomCodeInput.title = 'Ingresa el código de sala de 5 caracteres';
+            roomCodeInput.placeholder = 'Código de sala (ej: ABCDE)';
+            roomCodeInput.style.textTransform = 'uppercase';
+            
+            // Añadir evento para convertir automáticamente a mayúsculas
+            roomCodeInput.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+        }
         
         // Añadir botón para generar un código QR con la información de conexión
-        const qrButton = document.createElement('button');
-        qrButton.textContent = 'Mostrar QR';
-        qrButton.id = 'show-qr-button';
-        
-        qrButton.addEventListener('click', () => this.showConnectionQR());
-        
-        document.getElementById('connection-controls').appendChild(qrButton);
+        const connectionControls = document.getElementById('connection-controls');
+        if (connectionControls) {
+            const qrButton = document.createElement('button');
+            qrButton.textContent = 'Mostrar QR';
+            qrButton.id = 'show-qr-button';
+            
+            qrButton.addEventListener('click', () => this.showConnectionQR());
+            
+            connectionControls.appendChild(qrButton);
+        }
     }
     
     // Método para procesar el código pegado y separar el código de sala y el ID del host
@@ -257,10 +285,12 @@ class Multiplayer {
                 
                 // Mostrar el ID largo en la UI (ahora será visible gracias a los estilos)
                 const peerIdInput = document.getElementById('peer-id-input');
-                peerIdInput.value = this.localPeerId;
-                
-                // Añadir tooltip con información adicional
-                peerIdInput.title = `ID completo: ${id}\nID corto: ${this.displayId}`;
+                if (peerIdInput) {
+                    peerIdInput.value = this.localPeerId;
+                    
+                    // Añadir tooltip con información adicional
+                    peerIdInput.title = `ID completo: ${id}\nID corto: ${this.displayId}`;
+                }
                 
                 console.log('Peer abierto con id:', id);
                 console.log('ID de usuario para mostrar:', this.displayId);
@@ -333,9 +363,11 @@ class Multiplayer {
     
     updateConnectionStatus(status, message) {
         const statusEl = document.getElementById('connection-status');
-        statusEl.classList.remove('status-disconnected', 'status-connecting', 'status-connected', 'status-error');
-        statusEl.classList.add(`status-${status}`);
-        statusEl.textContent = message;
+        if (statusEl) {
+            statusEl.classList.remove('status-disconnected', 'status-connecting', 'status-connected', 'status-error');
+            statusEl.classList.add(`status-${status}`);
+            statusEl.textContent = message;
+        }
     }
     
     refreshConnectionUI() {
@@ -391,7 +423,10 @@ class Multiplayer {
                 // opcional: aplicar gameStatus enviado por host
                 if (data.gameStatus) { 
                     this.gameLogic.gameStatus = data.gameStatus; 
-                    document.getElementById('game-status').textContent = data.gameStatus; 
+                    const gameStatusEl = document.getElementById('game-status');
+                    if (gameStatusEl) {
+                        gameStatusEl.textContent = data.gameStatus; 
+                    }
                 }
                 break;
                 
@@ -473,23 +508,28 @@ class Multiplayer {
     
     updatePlayerRole(role) {
         const roleEl = document.getElementById('player-role');
-        document.getElementById('room-info').style.display = 'block';
-        document.getElementById('room-code-display').textContent = this.roomCode || '-';
+        const roomInfoEl = document.getElementById('room-info');
+        const roomCodeDisplayEl = document.getElementById('room-code-display');
         
-        roleEl.classList.remove('role-white', 'role-black', 'role-spectator');
-        
-        switch(role) {
-            case 'white': 
-                roleEl.classList.add('role-white'); 
-                roleEl.textContent = 'Rol: Blancas'; 
-                break;
-            case 'black': 
-                roleEl.classList.add('role-black'); 
-                roleEl.textContent = 'Rol: Negras'; 
-                break;
-            default: 
-                roleEl.classList.add('role-spectator'); 
-                roleEl.textContent = 'Rol: Espectador';
+        if (roleEl && roomInfoEl && roomCodeDisplayEl) {
+            roomInfoEl.style.display = 'block';
+            roomCodeDisplayEl.textContent = this.roomCode || '-';
+            
+            roleEl.classList.remove('role-white', 'role-black', 'role-spectator');
+            
+            switch(role) {
+                case 'white': 
+                    roleEl.classList.add('role-white'); 
+                    roleEl.textContent = 'Rol: Blancas'; 
+                    break;
+                case 'black': 
+                    roleEl.classList.add('role-black'); 
+                    roleEl.textContent = 'Rol: Negras'; 
+                    break;
+                default: 
+                    roleEl.classList.add('role-spectator'); 
+                    roleEl.textContent = 'Rol: Espectador';
+            }
         }
     }
     
@@ -627,8 +667,17 @@ class Multiplayer {
             this.isHost = true;
             // Usar el nuevo método para generar un código más corto
             this.roomCode = this.generateRoomCode(5); // 5 caracteres
-            document.getElementById('room-code-display').textContent = this.roomCode;
-            document.getElementById('room-info').style.display = 'block';
+            const roomCodeDisplayEl = document.getElementById('room-code-display');
+            const roomInfoEl = document.getElementById('room-info');
+            
+            if (roomCodeDisplayEl) {
+                roomCodeDisplayEl.textContent = this.roomCode;
+            }
+            
+            if (roomInfoEl) {
+                roomInfoEl.style.display = 'block';
+            }
+            
             this.updateConnectionStatus('connecting', 'Esperando jugador...');
             this.myRoleLocal = 'white';
             this.updatePlayerRole('white');
@@ -642,10 +691,18 @@ class Multiplayer {
     }
     
     async onJoinRoom() {
-        const hostPeerId = document.getElementById('host-id-input').value.trim();
-        const code = document.getElementById('room-code-input').value.trim().toUpperCase();
+        const hostPeerId = document.getElementById('host-id-input');
+        const roomCodeInput = document.getElementById('room-code-input');
         
-        if (!hostPeerId || !code) { 
+        if (!hostPeerId || !roomCodeInput) { 
+            alert('No se encontraron los campos de conexión');
+            return; 
+        }
+        
+        const hostPeerIdValue = hostPeerId.value.trim();
+        const code = roomCodeInput.value.trim().toUpperCase();
+        
+        if (!hostPeerIdValue || !code) { 
             alert('Por favor ingresa ID del host y código de sala'); 
             return; 
         }
@@ -659,10 +716,10 @@ class Multiplayer {
             // pero mostramos el ID corto en la UI
             
             // conectar al host con metadata conteniendo código de sala solicitado
-            const conn = this.peer.connect(hostPeerId, { metadata: { roomCode: code } });
+            const conn = this.peer.connect(hostPeerIdValue, { metadata: { roomCode: code } });
             
             conn.on('open', () => {
-                console.log('Conexión abierta con host', hostPeerId);
+                console.log('Conexión abierta con host', hostPeerIdValue);
                 this.setupConnectionHandlers(conn);
                 conn.send({ type: 'hello', message: 'Hola host, solicito unirme', desiredRole: null });
                 
@@ -687,4 +744,7 @@ class Multiplayer {
             this.updateConnectionStatus('error', 'No se pudo inicializar Peer: ' + err.message);
         }
     }
-}
+};
+
+// Asignar la clase a una variable global para evitar conflictos
+window.Multiplayer = MultiplayerClass;
