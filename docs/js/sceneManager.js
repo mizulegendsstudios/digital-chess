@@ -1,9 +1,4 @@
-// js/SceneManager.js
-import { LightingManager } from './SceneManager/LightingManager.js';
-import { SkyboxManager } from './SceneManager/SkyboxManager.js';
-import { DayNightCycle } from './SceneManager/DayNightCycle.js';
-import { UIManager } from './SceneManager/UIManager.js';
-
+// js/sceneManager.js
 class SceneManager {
     constructor() {
         this.scene = null;
@@ -83,4 +78,5 @@ class SceneManager {
     }
 }
 
-export { SceneManager };
+// Hacer la clase disponible globalmente
+window.SceneManager = SceneManager;
