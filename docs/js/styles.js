@@ -1,35 +1,227 @@
 // js/styles.js
 function injectStyles() {
     const styles = `
-        body { margin: 0; overflow: hidden; background: linear-gradient(to bottom, #87CEEB 0%, #98D8E8 50%, #FDB813 100%); }
+        /* Estilos base existentes */
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background: linear-gradient(to bottom, #87CEEB 0%, #98D8E8 50%, #FDB813 100%);
+            font-size: 14px; /* Tamaño base más grande para móviles */
+        }
         canvas { display: block; }
+        
+        /* Panel principal optimizado para móviles */
         #ui {
             position: absolute;
             top: 10px;
             left: 10px;
             color: white;
             font-family: 'Courier New', monospace;
-            background: rgba(0,0,0,0.7);
-            padding: 15px;
-            border-radius: 5px;
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            border-radius: 8px;
             border: 1px solid #444;
             z-index: 100;
-            max-width: 300px;
+            max-width: 280px;
+            max-height: 70vh; /* Limitar altura en móviles */
+            overflow-y: auto; /* Scroll si contenido es largo */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
+        
+        /* Panel multijugador optimizado */
+        #multiplayer-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            font-family: 'Courier New', monospace;
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            z-index: 100;
+            max-width: 280px;
+            max-height: 70vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        /* Títulos más compactos */
+        .kamisama-title h2 {
+            font-size: 18px;
+            margin: 5px 0;
+            text-align: center;
+        }
+        
+        /* Controles más compactos */
+        #controls h3, #multiplayer-panel h3 {
+            font-size: 14px;
+            margin: 8px 0;
+        }
+        
+        /* Botones más grandes para móviles */
+        button {
+            padding: 12px;
+            font-size: 14px;
+            border-radius: 6px;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        /* Campos de entrada más grandes */
+        input[type="text"] {
+            padding: 12px;
+            font-size: 14px;
+            border-radius: 6px;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        /* Indicadores más grandes */
+        .turn-indicator {
+            padding: 8px;
+            border-radius: 6px;
+            margin: 5px 0;
+        }
+        
+        /* Mejoras para táctil */
+        .key {
+            display: inline-block;
+            background: #333;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin: 2px;
+            border: 1px solid #555;
+            min-width: 28px;
+            text-align: center;
+        }
+        
+        /* Secciones colapsables en móviles */
+        .collapsible {
+            background: rgba(0,0,0,0.5);
+            cursor: pointer;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            font-size: 14px;
+            border-radius: 6px;
+            margin: 5px 0;
+        }
+        
+        .active, .collapsible:hover {
+            background: rgba(255,215,0,0.2);
+        }
+        
+        .content {
+            padding: 0 10px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.2s ease-out;
+            background: rgba(0,0,0,0.3);
+            border-radius: 0 0 6px 6px;
+        }
+        
+        /* Responsive para pantallas pequeñas */
+        @media (max-width: 768px) {
+            /* Paneles más anchos en móviles */
+            #ui, #multiplayer-panel {
+                max-width: calc(100% - 20px);
+                left: 10px;
+                right: 10px;
+            }
+            
+            /* Posicionar paneles uno debajo del otro */
+            #ui {
+                top: 10px;
+            }
+            
+            #multiplayer-panel {
+                top: auto;
+                bottom: 10px;
+            }
+            
+            /* Botones más grandes */
+            button {
+                padding: 15px;
+                font-size: 16px;
+            }
+            
+            /* Campos de entrada más grandes */
+            input[type="text"] {
+                padding: 15px;
+                font-size: 16px;
+            }
+            
+            /* Reducir padding en móviles */
+            #ui, #multiplayer-panel {
+                padding: 8px;
+            }
+            
+            /* Ocultar elementos no esenciales en móviles */
+            #info {
+                display: none;
+            }
+            
+            /* Historial de movimientos más compacto */
+            #move-history {
+                max-height: 60px;
+            }
+        }
+        
+        /* Para pantallas muy pequeñas */
+        @media (max-width: 480px) {
+            /* Paneles ocupan todo el ancho */
+            #ui, #multiplayer-panel {
+                max-width: 100%;
+                left: 0;
+                right: 0;
+                border-radius: 0;
+            }
+            
+            /* Títulos más pequeños */
+            .kamisama-title h2 {
+                font-size: 16px;
+            }
+            
+            /* Controles más compactos */
+            #controls p {
+                font-size: 12px;
+                margin: 3px 0;
+            }
+            
+            /* Botones más grandes aún */
+            button {
+                padding: 18px;
+                font-size: 18px;
+            }
+        }
+        
+        /* Estilos para el modal QR en móviles */
+        .qr-modal {
+            padding: 20px;
+        }
+        
+        .qr-modal-content {
+            width: 95%;
+            padding: 15px;
+        }
+        
+        .qr-placeholder {
+            width: 150px;
+            height: 150px;
+        }
+        
+        /* Resto de estilos existentes sin cambios */
         #controls {
             margin-bottom: 10px;
         }
         #info {
             font-size: 12px;
             color: #aaa;
-        }
-        .key {
-            display: inline-block;
-            background: #333;
-            padding: 2px 6px;
-            border-radius: 3px;
-            margin: 0 2px;
-            border: 1px solid #555;
         }
         .kamisama-title {
             color: #FFD700;
@@ -48,11 +240,6 @@ function injectStyles() {
             padding: 5px;
             background: rgba(0,0,0,0.5);
             border-radius: 3px;
-        }
-        .turn-indicator {
-            display: flex;
-            align-items: center;
-            margin-top: 5px;
         }
         .turn-indicator-white {
             color: #ffffff;
@@ -109,27 +296,6 @@ function injectStyles() {
         .move-entry {
             margin-bottom: 2px;
         }
-        
-        /* Estilos para el panel multijugador - AJUSTES PARA VER ID COMPLETO */
-        #multiplayer-panel {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            color: white;
-            font-family: 'Courier New', monospace;
-            background: rgba(0,0,0,0.7);
-            padding: 15px;
-            border-radius: 5px;
-            border: 1px solid #444;
-            z-index: 100;
-            /* Aumentar el ancho máximo para acomodar IDs largos */
-            max-width: 450px;
-            /* Ancho mínimo para asegurar que se vea bien */
-            min-width: 350px;
-            /* Permitir que el panel sea más alto si es necesario */
-            max-height: 90vh;
-            overflow-y: auto;
-        }
         .connection-status { 
             margin-top: 10px; 
             padding: 5px; 
@@ -180,8 +346,6 @@ function injectStyles() {
             margin-bottom: 3px; 
             font-size: 12px; 
         }
-        
-        /* Ajustes para que los IDs se vean completos */
         #peer-id-input, #host-id-input, #room-code-input { 
             width: 100%; 
             padding: 8px; 
@@ -190,50 +354,35 @@ function injectStyles() {
             border: 1px solid #555; 
             color: white; 
             border-radius: 3px;
-            /* Asegurar que el texto no se corte */
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            /* Tamaño de fuente más pequeño para IDs largos */
             font-size: 11px;
-            /* Altura ajustada para mostrar el contenido completo */
             height: auto;
             min-height: 36px;
             padding-top: 10px;
             padding-bottom: 10px;
-            /* Forzar el modo de escritura horizontal para que no se rompa el ID */
             writing-mode: horizontal-tb;
-            /* Asegurar que el campo de texto se expanda si es necesario */
             resize: none;
         }
-        
-        /* Estilo específico para el ID del host para asegurar que se vea completo */
         #host-id-input {
-            /* Altura mayor para acomodar el ID completo */
             min-height: 50px;
             padding-top: 15px;
             padding-bottom: 15px;
-            /* Tamaño de fuente aún más pequeño si es necesario */
             font-size: 10px;
-            /* Espaciado de línea ajustado para mejor legibilidad */
             line-height: 1.2;
-            /* Permitir scroll horizontal si es extremadamente largo */
             overflow-x: auto;
             white-space: pre;
             word-break: keep-all;
         }
-        
-        /* Contenedor para el ID del host con botón de copiar */
         .peer-id-container {
             display: flex;
             align-items: center;
             gap: 5px;
         }
-        
         .peer-id-container input {
             flex: 1;
         }
-        
         .copy-button {
             padding: 8px 12px;
             background: #444;
@@ -245,11 +394,9 @@ function injectStyles() {
             font-size: 11px;
             flex-shrink: 0;
         }
-        
         .copy-button:hover {
             background: #555;
         }
-        
         #create-room-button, #join-room-button { 
             width: 100%; 
             padding: 10px; 
@@ -269,8 +416,6 @@ function injectStyles() {
             font-size: 12px; 
             display: none; 
         }
-        
-        /* Estilos para el botón de mostrar QR */
         #show-qr-button {
             width: 100%;
             padding: 10px;
@@ -282,12 +427,9 @@ function injectStyles() {
             cursor: pointer;
             font-weight: bold;
         }
-        
         #show-qr-button:hover {
             background: #555;
         }
-        
-        /* Estilos para el modal del QR */
         .qr-modal {
             position: fixed;
             top: 0;
@@ -301,7 +443,6 @@ function injectStyles() {
             justify-content: center;
             z-index: 10000;
         }
-        
         .qr-modal-content {
             background-color: #333;
             padding: 20px;
@@ -311,18 +452,15 @@ function injectStyles() {
             text-align: center;
             color: white;
         }
-        
         .qr-modal h2 {
             margin-top: 0;
             color: #FFD700;
         }
-        
         .qr-modal p {
             margin-bottom: 20px;
             word-break: break-all;
             font-size: 12px;
         }
-        
         .qr-placeholder {
             width: 200px;
             height: 200px;
@@ -333,7 +471,6 @@ function injectStyles() {
             justify-content: center;
             color: #000;
         }
-        
         .qr-modal button {
             padding: 8px 16px;
             background-color: #444;
@@ -342,7 +479,6 @@ function injectStyles() {
             border-radius: 3px;
             cursor: pointer;
         }
-        
         .qr-modal button:hover {
             background-color: #555;
         }
