@@ -43,8 +43,13 @@ class InputHandler {
         document.addEventListener('click', (e) => this.onMouseClick(e));
         document.addEventListener('wheel', (e) => this.onMouseWheel(e));
         
-        // Evento de reinicio
-        document.getElementById('restart-button').addEventListener('click', () => this.onRestartGame());
+        // Evento de reinicio - verificar si el elemento existe
+        const restartButton = document.getElementById('restart-button');
+        if (restartButton) {
+            restartButton.addEventListener('click', () => this.onRestartGame());
+        } else {
+            console.warn('Elemento restart-button no encontrado en el DOM');
+        }
     }
     
     onMouseMove(event) {
@@ -146,7 +151,11 @@ class InputHandler {
             this.updateTurnIndicator();
             this.updateCapturedPieces();
             this.updateMoveHistory();
-            document.getElementById('game-status').textContent = 'Juego en curso';
+            
+            const gameStatusEl = document.getElementById('game-status');
+            if (gameStatusEl) {
+                gameStatusEl.textContent = 'Juego en curso';
+            }
         }
     }
     
@@ -286,57 +295,69 @@ class InputHandler {
     
     updateTurnIndicator() {
         const turnElement = document.getElementById('current-turn');
-        if (this.gameLogic.currentTurn === 'white') {
-            turnElement.textContent = 'Blancas';
-            turnElement.className = 'turn-indicator-white';
-        } else {
-            turnElement.textContent = 'Negras';
-            turnElement.className = 'turn-indicator-black';
+        if (turnElement) {
+            if (this.gameLogic.currentTurn === 'white') {
+                turnElement.textContent = 'Blancas';
+                turnElement.className = 'turn-indicator-white';
+            } else {
+                turnElement.textContent = 'Negras';
+                turnElement.className = 'turn-indicator-black';
+            }
         }
     }
     
     updateCapturedPieces() {
-        const whiteCaptured = this.gameLogic.capturedPieces.white.length > 0 ? 
-            this.gameLogic.capturedPieces.white.join(', ') : 'Ninguna';
-        const blackCaptured = this.gameLogic.capturedPieces.black.length > 0 ? 
-            this.gameLogic.capturedPieces.black.join(', ') : 'Ninguna';
+        const whiteCapturedEl = document.getElementById('captured-white');
+        const blackCapturedEl = document.getElementById('captured-black');
         
-        document.getElementById('captured-white').textContent = whiteCaptured;
-        document.getElementById('captured-black').textContent = blackCaptured;
+        if (whiteCapturedEl && blackCapturedEl) {
+            const whiteCaptured = this.gameLogic.capturedPieces.white.length > 0 ? 
+                this.gameLogic.capturedPieces.white.join(', ') : 'Ninguna';
+            const blackCaptured = this.gameLogic.capturedPieces.black.length > 0 ? 
+                this.gameLogic.capturedPieces.black.join(', ') : 'Ninguna';
+            
+            whiteCapturedEl.textContent = whiteCaptured;
+            blackCapturedEl.textContent = blackCaptured;
+        }
     }
     
     updateMoveHistory() {
         const movesList = document.getElementById('moves-list');
-        movesList.innerHTML = '';
-        
-        // Mostrar últimos 10 movimientos
-        const recentMoves = this.gameLogic.moveHistory.slice(-10);
-        recentMoves.forEach(move => {
-            const moveEntry = document.createElement('div');
-            moveEntry.className = 'move-entry';
-            moveEntry.textContent = move;
-            movesList.appendChild(moveEntry);
-        });
-        
-        // Scroll al final
-        movesList.scrollTop = movesList.scrollHeight;
+        if (movesList) {
+            movesList.innerHTML = '';
+            
+            // Mostrar últimos 10 movimientos
+            const recentMoves = this.gameLogic.moveHistory.slice(-10);
+            recentMoves.forEach(move => {
+                const moveEntry = document.createElement('div');
+                moveEntry.className = 'move-entry';
+                moveEntry.textContent = move;
+                movesList.appendChild(moveEntry);
+            });
+            
+            // Scroll al final
+            movesList.scrollTop = movesList.scrollHeight;
+        }
     }
     
     updateGameStatus() {
-        switch(this.gameLogic.gameStatus) {
-            case 'playing':
-                document.getElementById('game-status').textContent = 'Juego en curso';
-                break;
-            case 'check':
-                document.getElementById('game-status').textContent = '¡Jaque!';
-                break;
-            case 'checkmate':
-                document.getElementById('game-status').textContent = 
-                    `¡Jaque mate! Ganan las ${this.gameLogic.currentTurn === 'white' ? 'negras' : 'blancas'}`;
-                break;
-            case 'stalemate':
-                document.getElementById('game-status').textContent = '¡Tablas por ahogado!';
-                break;
+        const gameStatusEl = document.getElementById('game-status');
+        if (gameStatusEl) {
+            switch(this.gameLogic.gameStatus) {
+                case 'playing':
+                    gameStatusEl.textContent = 'Juego en curso';
+                    break;
+                case 'check':
+                    gameStatusEl.textContent = '¡Jaque!';
+                    break;
+                case 'checkmate':
+                    gameStatusEl.textContent = 
+                        `¡Jaque mate! Ganan las ${this.gameLogic.currentTurn === 'white' ? 'negras' : 'blancas'}`;
+                    break;
+                case 'stalemate':
+                    gameStatusEl.textContent = '¡Tablas por ahogado!';
+                    break;
+            }
         }
     }
     
@@ -349,7 +370,10 @@ class InputHandler {
         const currentTime = performance.now();
         if (currentTime >= lastTime + 1000) {
             fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
-            document.getElementById('fps').textContent = fps;
+            const fpsElement = document.getElementById('fps');
+            if (fpsElement) {
+                fpsElement.textContent = fps;
+            }
             frameCount = 0;
             lastTime = currentTime;
         }
