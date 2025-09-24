@@ -27,10 +27,15 @@ class Game {
         
         this.gameLogic = new GameLogic(board, pieces);
         this.inputHandler = new InputHandler(this.sceneManager, this.gameLogic, this.pieceFactory);
-        this.multiplayer = new Multiplayer(this.gameLogic, this.inputHandler, this.pieceFactory);
         
-        // Establecer la referencia entre el módulo multijugador y el manejador de entrada
-        this.inputHandler.setMultiplayer(this.multiplayer);
+        // Usar la clase Multiplayer correcta
+        if (typeof Multiplayer !== 'undefined') {
+            this.multiplayer = new Multiplayer(this.gameLogic, this.inputHandler, this.pieceFactory);
+            // Establecer la referencia entre el módulo multijugador y el manejador de entrada
+            this.inputHandler.setMultiplayer(this.multiplayer);
+        } else {
+            console.error('La clase Multiplayer no está definida');
+        }
         
         // Inicializar UI
         this.inputHandler.updateTurnIndicator();
@@ -43,7 +48,10 @@ class Game {
         const currentTime = performance.now();
         if (currentTime >= this.lastTime + 1000) {
             this.fps = Math.round((this.frameCount * 1000) / (currentTime - this.lastTime));
-            document.getElementById('fps').textContent = this.fps;
+            const fpsElement = document.getElementById('fps');
+            if (fpsElement) {
+                fpsElement.textContent = this.fps;
+            }
             this.frameCount = 0;
             this.lastTime = currentTime;
         }
