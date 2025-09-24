@@ -29,48 +29,13 @@ class Game {
         this.inputHandler = new InputHandler(this.sceneManager, this.gameLogic, this.pieceFactory);
         this.multiplayer = new Multiplayer(this.gameLogic, this.inputHandler, this.pieceFactory);
         
+        // Establecer la referencia entre el módulo multijugador y el manejador de entrada
+        this.inputHandler.setMultiplayer(this.multiplayer);
+        
         // Inicializar UI
         this.inputHandler.updateTurnIndicator();
         this.inputHandler.updateCapturedPieces();
         this.inputHandler.updateMoveHistory();
-        
-        // Sobreescribir el método makeMove del inputHandler para manejar el modo multijugador
-        const originalMakeMove = this.inputHandler.makeMove.bind(this.inputHandler);
-        this.inputHandler.makeMove = (piece, toRow, toCol) => {
-            // Verificar si estamos en modo multijugador
-            const isConnected = Object.values(this.multiplayer.connections).some(conn => conn.open);
-            
-            if (isConnected && !this.multiplayer.isHost) {
-                // En modo cliente, enviar solicitud al host
-                this.multiplayer.requestMoveToHost(piece, toRow, toCol);
-                return null;
-            } else {
-                // En modo local o host, aplicar movimiento directamente
-                const moveData = originalMakeMove(piece, toRow, toCol);
-                
-                // Si es host, difundir el movimiento
-                if (this.multiplayer.isHost && moveData) {
-                    this.multiplayer.broadcast({ 
-                        type: 'move', 
-                        move: moveData,
-                        gameStatus: this.gameLogic.gameStatus
-                    });
-                }
-                
-                return moveData;
-            }
-        };
-        
-        // Sobreescribir el método onRestartGame del inputHandler para manejar el modo multijugador
-        const originalOnRestartGame = this.inputHandler.onRestartGame.bind(this.inputHandler);
-        this.inputHandler.onRestartGame = () => {
-            // Si es host, enviar estado completo a los clientes
-            if (this.multiplayer.isHost) {
-                this.multiplayer.restartGameHost();
-            } else {
-                originalOnRestartGame();
-            }
-        };
     }
     
     updateFPS() {
