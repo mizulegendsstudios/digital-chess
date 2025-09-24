@@ -1,4 +1,4 @@
-// js/loader/appInitializer.js
+// js/loader/appInitializer.js-
 
 import { loadScriptsSequentially, scriptsToLoad } from './scriptLoader.js';
 
