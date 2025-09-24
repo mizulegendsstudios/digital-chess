@@ -25,7 +25,10 @@ class Multiplayer {
     
     async initializePeer() {
         return new Promise((resolve, reject) => {
-            if (this.peer && this.peer.id) return resolve(this.peer.id);
+            if (this.peer && this.peer.id) {
+                resolve(this.peer.id);
+                return;
+            }
             
             this.peer = new Peer();
             
@@ -425,18 +428,26 @@ class Multiplayer {
                 console.log('Conexión abierta con host', hostPeerId);
                 this.setupConnectionHandlers(conn);
                 conn.send({ type: 'hello', message: 'Hola host, solicito unirme', desiredRole: null });
+                
+                // Actualizar UI a "conectando" mientras esperamos la respuesta del host
+                this.updateConnectionStatus('connecting', 'Conectando con el host...');
             });
             
             conn.on('error', (e) => { 
-                console.error(e); 
-                this.updateConnectionStatus('error', 'Error al conectar con host'); 
+                console.error('Error de conexión:', e);
+                this.updateConnectionStatus('error', 'Error al conectar con host: ' + e.message);
             });
             
-            this.updateConnectionStatus('connecting', 'Conectando...');
+            // Manejar cierre de conexión
+            conn.on('close', () => {
+                console.log('Conexión cerrada con el host');
+                this.updateConnectionStatus('disconnected', 'Desconectado del host');
+            });
+            
             this.updatePlayerRole('spectator');
         } catch(err) {
             console.error('Error initializing peer for joiner', err);
-            this.updateConnectionStatus('error', 'No se pudo inicializar Peer');
+            this.updateConnectionStatus('error', 'No se pudo inicializar Peer: ' + err.message);
         }
     }
 }
