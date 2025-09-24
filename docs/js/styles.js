@@ -1,7 +1,6 @@
 // js/styles.js
 function injectStyles() {
     const styles = `
-        /* Estilos base existentes */
         body { 
             margin: 0; 
             overflow: hidden; 
@@ -22,7 +21,7 @@ function injectStyles() {
             border-radius: 8px;
             border: 1px solid #444;
             z-index: 100;
-            max-width: 280px;
+            max-width: 300px;
             max-height: 70vh; /* Limitar altura en móviles */
             overflow-y: auto; /* Scroll si contenido es largo */
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
@@ -36,12 +35,16 @@ function injectStyles() {
             color: white;
             font-family: 'Courier New', monospace;
             background: rgba(0,0,0,0.8);
-            padding: 10px;
+            padding: 15px;
             border-radius: 8px;
             border: 1px solid #444;
             z-index: 100;
-            max-width: 280px;
-            max-height: 70vh;
+            /* Aumentar el ancho máximo para acomodar IDs largos */
+            max-width: 450px;
+            /* Ancho mínimo para asegurar que se vea bien */
+            min-width: 350px;
+            /* Permitir que el panel sea más alto si es necesario */
+            max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
@@ -125,23 +128,94 @@ function injectStyles() {
             border-radius: 0 0 6px 6px;
         }
         
+        /* Contenedor para el ID del peer con botón de copiar */
+        .peer-id-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .peer-id-container input {
+            flex: 1;
+        }
+        
+        .copy-button {
+            padding: 10px 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 12px;
+            font-weight: bold;
+            flex-shrink: 0;
+            transition: background-color 0.3s;
+        }
+        
+        .copy-button:hover {
+            background: #45a049;
+        }
+        
+        /* Ajustes para que los IDs se vean completos */
+        #peer-id-input, #host-id-input, #room-code-input { 
+            width: 100%; 
+            padding: 8px; 
+            margin-bottom: 5px; 
+            background: rgba(255,255,255,0.1); 
+            border: 1px solid #555; 
+            color: white; 
+            border-radius: 3px;
+            /* Asegurar que el texto no se corte */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            /* Tamaño de fuente más pequeño para IDs largos */
+            font-size: 11px;
+            /* Altura ajustada para mostrar el contenido completo */
+            height: auto;
+            min-height: 36px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            /* Forzar el modo de escritura horizontal para que no se rompa el ID */
+            writing-mode: horizontal-tb;
+            /* Asegurar que el campo de texto se expanda si es necesario */
+            resize: none;
+        }
+        
+        /* Estilo específico para el ID del host para asegurar que se vea completo */
+        #host-id-input {
+            /* Altura mayor para acomodar el ID completo */
+            min-height: 50px;
+            padding-top: 15px;
+            padding-bottom: 15px;
+            /* Tamaño de fuente aún más pequeño si es necesario */
+            font-size: 10px;
+            /* Espaciado de línea ajustado para mejor legibilidad */
+            line-height: 1.2;
+            /* Permitir scroll horizontal si es extremadamente largo */
+            overflow-x: auto;
+            white-space: pre;
+            word-break: keep-all;
+        }
+        
         /* Responsive para pantallas pequeñas */
         @media (max-width: 768px) {
             /* Paneles más anchos en móviles */
-            #ui, #multiplayer-panel {
+            #ui {
                 max-width: calc(100% - 20px);
                 left: 10px;
                 right: 10px;
             }
             
-            /* Posicionar paneles uno debajo del otro */
-            #ui {
-                top: 10px;
-            }
-            
             #multiplayer-panel {
+                max-width: calc(100% - 20px);
+                left: 10px;
+                right: 10px;
                 top: auto;
                 bottom: 10px;
+                min-width: auto;
             }
             
             /* Botones más grandes */
@@ -169,6 +243,17 @@ function injectStyles() {
             /* Historial de movimientos más compacto */
             #move-history {
                 max-height: 60px;
+            }
+            
+            /* Ajustes para el contenedor de ID en móviles */
+            .peer-id-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .copy-button {
+                width: 100%;
+                margin-top: 5px;
             }
         }
         
@@ -198,6 +283,12 @@ function injectStyles() {
                 padding: 18px;
                 font-size: 18px;
             }
+            
+            /* Ajustes para el ID del host en pantallas muy pequeñas */
+            #host-id-input {
+                min-height: 70px;
+                font-size: 9px;
+            }
         }
         
         /* Estilos para el modal QR en móviles */
@@ -215,7 +306,7 @@ function injectStyles() {
             height: 150px;
         }
         
-        /* Resto de estilos existentes sin cambios */
+        /* Estilos restantes */
         #controls {
             margin-bottom: 10px;
         }
@@ -346,57 +437,6 @@ function injectStyles() {
             margin-bottom: 3px; 
             font-size: 12px; 
         }
-        #peer-id-input, #host-id-input, #room-code-input { 
-            width: 100%; 
-            padding: 8px; 
-            margin-bottom: 5px; 
-            background: rgba(255,255,255,0.1); 
-            border: 1px solid #555; 
-            color: white; 
-            border-radius: 3px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            font-size: 11px;
-            height: auto;
-            min-height: 36px;
-            padding-top: 10px;
-            padding-bottom: 10px;
-            writing-mode: horizontal-tb;
-            resize: none;
-        }
-        #host-id-input {
-            min-height: 50px;
-            padding-top: 15px;
-            padding-bottom: 15px;
-            font-size: 10px;
-            line-height: 1.2;
-            overflow-x: auto;
-            white-space: pre;
-            word-break: keep-all;
-        }
-        .peer-id-container {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .peer-id-container input {
-            flex: 1;
-        }
-        .copy-button {
-            padding: 8px 12px;
-            background: #444;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            white-space: nowrap;
-            font-size: 11px;
-            flex-shrink: 0;
-        }
-        .copy-button:hover {
-            background: #555;
-        }
         #create-room-button, #join-room-button { 
             width: 100%; 
             padding: 10px; 
@@ -481,6 +521,37 @@ function injectStyles() {
         }
         .qr-modal button:hover {
             background-color: #555;
+        }
+        
+        /* Estilos para el tooltip de ayuda */
+        .help-tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 5px;
+            cursor: help;
+        }
+        
+        .help-tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 11px;
+        }
+        
+        .help-tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
         }
     `;
     
