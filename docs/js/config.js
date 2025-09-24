@@ -1,6 +1,6 @@
 // js/config.js
 const Config = {
-    // Configuración del juego
+    // Configuración del juego-
     GAME_TITLE: "Voxel Chess - Ajedrez Digital 3D (Multijugador) v1.0.2",
     BOARD_SIZE: 8,
     VOXEL_SIZE: 1,
