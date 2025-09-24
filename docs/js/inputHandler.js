@@ -21,7 +21,14 @@ class InputHandler {
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
         
+        // Referencia al módulo multijugador (se establecerá después)
+        this.multiplayer = null;
+        
         this.init();
+    }
+    
+    setMultiplayer(multiplayer) {
+        this.multiplayer = multiplayer;
     }
     
     init() {
@@ -104,31 +111,58 @@ class InputHandler {
     }
     
     onRestartGame() {
-        this.gameLogic.restartGame();
-        
-        // Eliminar todas las piezas del tablero y de la escena
-        this.gameLogic.pieces.length = 0;
-        for (let row = 0; row < this.boardSize; row++) {
-            for (let col = 0; col < this.boardSize; col++) {
-                this.gameLogic.board[row][col] = null;
+        // Verificar si estamos en modo multijugador
+        if (this.multiplayer && Object.keys(this.multiplayer.connections).length > 0) {
+            // En modo multijugador, el host reinicia y difunde el estado
+            if (this.multiplayer.isHost) {
+                this.multiplayer.restartGameHost();
+            } else {
+                // Los clientes envían solicitud de reinicio al host
+                const hostConn = Object.values(this.multiplayer.connections)[0];
+                if (hostConn && hostConn.open) {
+                    hostConn.send({ type: 'restart' });
+                }
             }
+        } else {
+            // En modo local, reiniciar normalmente
+            this.gameLogic.restartGame();
+            
+            // Eliminar todas las piezas del tablero y de la escena
+            this.gameLogic.pieces.length = 0;
+            for (let row = 0; row < this.boardSize; row++) {
+                for (let col = 0; col < this.boardSize; col++) {
+                    this.gameLogic.board[row][col] = null;
+                }
+            }
+            
+            // Eliminar todos los voxels de tipo 'piece' de la escena
+            const pieceMeshes = this.scene.children.filter(child => child.userData.type === 'piece');
+            pieceMeshes.forEach(mesh => this.scene.remove(mesh));
+            
+            // Volver a crear las piezas
+            this.pieceFactory.initializePieces();
+            
+            // Actualizar UI
+            this.updateTurnIndicator();
+            this.updateCapturedPieces();
+            this.updateMoveHistory();
+            document.getElementById('game-status').textContent = 'Juego en curso';
         }
-        
-        // Eliminar todos los voxels de tipo 'piece' de la escena
-        const pieceMeshes = this.scene.children.filter(child => child.userData.type === 'piece');
-        pieceMeshes.forEach(mesh => this.scene.remove(mesh));
-        
-        // Volver a crear las piezas
-        this.pieceFactory.initializePieces();
-        
-        // Actualizar UI
-        this.updateTurnIndicator();
-        this.updateCapturedPieces();
-        this.updateMoveHistory();
-        document.getElementById('game-status').textContent = 'Juego en curso';
     }
     
     makeMove(piece, toRow, toCol) {
+        // Verificar si estamos en modo multijugador
+        if (this.multiplayer && Object.keys(this.multiplayer.connections).length > 0 && !this.multiplayer.isHost) {
+            // En modo cliente, enviar solicitud al host
+            this.multiplayer.requestMoveToHost(piece, toRow, toCol);
+            
+            // No ejecutar el movimiento localmente, esperar confirmación del host
+            this.gameLogic.deselectPiece();
+            this.highlightValidMoves([]);
+            return null;
+        }
+        
+        // En modo local o host, aplicar movimiento directamente
         const moveData = this.gameLogic.makeMove(piece, toRow, toCol);
         
         if (moveData) {
@@ -147,6 +181,15 @@ class InputHandler {
                 // Deseleccionar pieza
                 this.gameLogic.deselectPiece();
                 this.highlightValidMoves([]);
+                
+                // Si es host, difundir el movimiento a los clientes
+                if (this.multiplayer && this.multiplayer.isHost) {
+                    this.multiplayer.broadcast({ 
+                        type: 'move', 
+                        move: moveData,
+                        gameStatus: this.gameLogic.gameStatus
+                    });
+                }
             });
             
             return moveData;
