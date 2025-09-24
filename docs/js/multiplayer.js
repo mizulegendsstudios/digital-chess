@@ -42,19 +42,33 @@ class Multiplayer {
         
         // Crear el botón de copiar
         const copyButton = document.createElement('button');
-        copyButton.textContent = 'Copiar';
+        copyButton.textContent = 'Copiar Código';
         copyButton.className = 'copy-button';
         
         copyButton.addEventListener('click', () => {
-            peerIdInput.select();
-            document.execCommand('copy');
+            // Concatenar el código de sala y el ID del host
+            const fullCode = this.roomCode + this.localPeerId;
             
-            // Cambiar texto del botón temporalmente para indicar que se copió
-            const originalText = copyButton.textContent;
-            copyButton.textContent = '¡Copiado!';
-            setTimeout(() => {
-                copyButton.textContent = originalText;
-            }, 2000);
+            // Copiar al portapapeles
+            navigator.clipboard.writeText(fullCode).then(() => {
+                // Cambiar texto del botón temporalmente para indicar que se copió
+                const originalText = copyButton.textContent;
+                copyButton.textContent = '¡Copiado!';
+                setTimeout(() => {
+                    copyButton.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('Error al copiar al portapapeles:', err);
+                // Fallback para navegadores que no soportan clipboard API
+                peerIdInput.select();
+                document.execCommand('copy');
+                
+                const originalText = copyButton.textContent;
+                copyButton.textContent = '¡Copiado!';
+                setTimeout(() => {
+                    copyButton.textContent = originalText;
+                }, 2000);
+            });
         });
         
         peerIdContainer.appendChild(copyButton);
@@ -64,8 +78,39 @@ class Multiplayer {
         
         // Mejorar el campo del ID del host
         const hostIdInput = document.getElementById('host-id-input');
-        hostIdInput.title = 'Pega aquí el ID completo del host';
-        hostIdInput.placeholder = 'ID completo del host (36 caracteres)';
+        hostIdInput.title = 'Pega aquí el código completo (código de sala + ID del host)';
+        hostIdInput.placeholder = 'Pega el código completo aquí';
+        
+        // Añadir evento para procesar el pegado y separar automáticamente el código de sala y el ID del host
+        hostIdInput.addEventListener('paste', (event) => {
+            // Prevenir el comportamiento por defecto
+            event.preventDefault();
+            
+            // Obtener el texto pegado
+            const pastedText = (event.clipboardData || window.clipboardData).getData('text');
+            
+            // Procesar el texto para separar el código de sala y el ID del host
+            const { roomCode, hostId } = this.processPastedCode(pastedText);
+            
+            // Actualizar los campos correspondientes
+            if (roomCode) {
+                document.getElementById('room-code-input').value = roomCode;
+            }
+            
+            if (hostId) {
+                hostIdInput.value = hostId;
+            }
+            
+            // Mostrar un mensaje de confirmación
+            const originalPlaceholder = hostIdInput.placeholder;
+            hostIdInput.placeholder = 'Código procesado automáticamente';
+            hostIdInput.style.backgroundColor = 'rgba(0, 255, 0, 0.2)';
+            
+            setTimeout(() => {
+                hostIdInput.placeholder = originalPlaceholder;
+                hostIdInput.style.backgroundColor = '';
+            }, 2000);
+        });
         
         // Mejorar el campo del código de sala
         const roomCodeInput = document.getElementById('room-code-input');
@@ -86,6 +131,32 @@ class Multiplayer {
         qrButton.addEventListener('click', () => this.showConnectionQR());
         
         document.getElementById('connection-controls').appendChild(qrButton);
+    }
+    
+    // Método para procesar el código pegado y separar el código de sala y el ID del host
+    processPastedCode(pastedText) {
+        // Eliminar espacios en blanco y caracteres no deseados
+        const cleanText = pastedText.trim().replace(/\s/g, '');
+        
+        // El código de sala son los primeros 5 caracteres
+        const roomCode = cleanText.substring(0, 5);
+        
+        // El ID del host es el resto del texto (debe tener 36 caracteres)
+        const hostId = cleanText.substring(5);
+        
+        // Validar que el ID del host tenga una longitud válida (36 caracteres para UUID)
+        if (hostId.length >= 30) { // Aceptamos IDs que puedan tener entre 30 y 40 caracteres
+            return {
+                roomCode: roomCode.toUpperCase(),
+                hostId: hostId
+            };
+        } else {
+            // Si no hay un ID de host válido, devolver solo el código de sala
+            return {
+                roomCode: roomCode.toUpperCase(),
+                hostId: ''
+            };
+        }
     }
     
     // Método para mostrar un código QR con la información de conexión
@@ -117,8 +188,9 @@ class Multiplayer {
         // Información de conexión
         const info = document.createElement('p');
         info.innerHTML = `
-            <strong>ID del Host:</strong> ${this.localPeerId}<br>
-            <strong>Código de Sala:</strong> ${this.roomCode}
+            <strong>Código Completo:</strong> ${this.roomCode}${this.localPeerId}<br>
+            <strong>Código de Sala:</strong> ${this.roomCode}<br>
+            <strong>ID del Host:</strong> ${this.localPeerId}
         `;
         content.appendChild(info);
         
