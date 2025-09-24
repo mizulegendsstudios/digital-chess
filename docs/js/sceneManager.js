@@ -1,4 +1,4 @@
-// Inicialización de la escena
+// Inicialización de la escena-
 function initScene() {
     // Crear escena
     window.scene = new THREE.Scene();
