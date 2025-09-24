@@ -1,4 +1,4 @@
-// CSS principal que se cargará dinámicamente
+// CSS principal que se cargará dinámicamente-
 const gameCSS = `
     body { 
         margin: 0; 
