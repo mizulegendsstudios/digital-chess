@@ -81,11 +81,26 @@ async function initGame() {
         injectStylesAndContent();
         
         // Esperar un poco a que el DOM se actualice
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 300));
         
         // Verificar que la clase Game esté disponible
         if (typeof Game === 'undefined') {
             throw new Error('La clase Game no está definida');
+        }
+        
+        // Verificar que los elementos necesarios existan en el DOM
+        const requiredElements = [
+            'voxelCount',
+            'restart-button',
+            'create-room-button',
+            'join-room-button'
+        ];
+        
+        const missingElements = requiredElements.filter(id => !document.getElementById(id));
+        
+        if (missingElements.length > 0) {
+            console.warn('Elementos faltantes en el DOM:', missingElements);
+            throw new Error(`Faltan elementos necesarios en el DOM: ${missingElements.join(', ')}`);
         }
         
         // Crear e iniciar el juego
