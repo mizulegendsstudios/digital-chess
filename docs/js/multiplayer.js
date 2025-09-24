@@ -29,21 +29,23 @@ class Multiplayer {
     
     // Método para mejorar la UI de conexión
     improveConnectionUI() {
-        // Añadir un botón para copiar el ID al portapapeles
+        // Reorganizar el campo del ID del peer para que sea más visible
         const peerIdGroup = document.querySelector('#peer-id-input').parentNode;
         
+        // Crear un contenedor para el ID y el botón de copiar
+        const peerIdContainer = document.createElement('div');
+        peerIdContainer.className = 'peer-id-container';
+        
+        // Mover el input al nuevo contenedor
+        const peerIdInput = document.getElementById('peer-id-input');
+        peerIdContainer.appendChild(peerIdInput);
+        
+        // Crear el botón de copiar
         const copyButton = document.createElement('button');
         copyButton.textContent = 'Copiar';
-        copyButton.style.marginLeft = '5px';
-        copyButton.style.padding = '5px 10px';
-        copyButton.style.backgroundColor = '#444';
-        copyButton.style.color = 'white';
-        copyButton.style.border = 'none';
-        copyButton.style.borderRadius = '3px';
-        copyButton.style.cursor = 'pointer';
+        copyButton.className = 'copy-button';
         
         copyButton.addEventListener('click', () => {
-            const peerIdInput = document.getElementById('peer-id-input');
             peerIdInput.select();
             document.execCommand('copy');
             
@@ -55,17 +57,20 @@ class Multiplayer {
             }, 2000);
         });
         
-        peerIdGroup.appendChild(copyButton);
+        peerIdContainer.appendChild(copyButton);
         
-        // Hacer que el campo de ID del host sea más grande y con mejor tooltip
+        // Reemplazar el grupo original con el nuevo contenedor
+        peerIdGroup.parentNode.replaceChild(peerIdContainer, peerIdGroup);
+        
+        // Mejorar el campo del ID del host
         const hostIdInput = document.getElementById('host-id-input');
         hostIdInput.title = 'Pega aquí el ID completo del host';
-        hostIdInput.style.width = '100%';
+        hostIdInput.placeholder = 'ID completo del host (36 caracteres)';
         
         // Mejorar el campo del código de sala
         const roomCodeInput = document.getElementById('room-code-input');
         roomCodeInput.title = 'Ingresa el código de sala de 5 caracteres';
-        roomCodeInput.style.width = '100%';
+        roomCodeInput.placeholder = 'Código de sala (ej: ABCDE)';
         roomCodeInput.style.textTransform = 'uppercase';
         
         // Añadir evento para convertir automáticamente a mayúsculas
@@ -76,14 +81,7 @@ class Multiplayer {
         // Añadir botón para generar un código QR con la información de conexión
         const qrButton = document.createElement('button');
         qrButton.textContent = 'Mostrar QR';
-        qrButton.style.marginTop = '10px';
-        qrButton.style.padding = '5px 10px';
-        qrButton.style.backgroundColor = '#444';
-        qrButton.style.color = 'white';
-        qrButton.style.border = 'none';
-        qrButton.style.borderRadius = '3px';
-        qrButton.style.cursor = 'pointer';
-        qrButton.style.width = '100%';
+        qrButton.id = 'show-qr-button';
         
         qrButton.addEventListener('click', () => this.showConnectionQR());
         
@@ -97,34 +95,23 @@ class Multiplayer {
             return;
         }
         
+        // Verificar si ya existe un modal y eliminarlo
+        const existingModal = document.querySelector('.qr-modal');
+        if (existingModal) {
+            document.body.removeChild(existingModal);
+        }
+        
         // Crear un modal para mostrar el QR
         const modal = document.createElement('div');
-        modal.style.position = 'fixed';
-        modal.style.top = '0';
-        modal.style.left = '0';
-        modal.style.width = '100%';
-        modal.style.height = '100%';
-        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-        modal.style.display = 'flex';
-        modal.style.flexDirection = 'column';
-        modal.style.alignItems = 'center';
-        modal.style.justifyContent = 'center';
-        modal.style.zIndex = '10000';
+        modal.className = 'qr-modal';
         
         // Contenido del modal
         const content = document.createElement('div');
-        content.style.backgroundColor = '#333';
-        content.style.padding = '20px';
-        content.style.borderRadius = '10px';
-        content.style.maxWidth = '400px';
-        content.style.width = '90%';
-        content.style.textAlign = 'center';
-        content.style.color = 'white';
+        content.className = 'qr-modal-content';
         
         // Título
         const title = document.createElement('h2');
         title.textContent = 'Código de Conexión';
-        title.style.marginTop = '0';
         content.appendChild(title);
         
         // Información de conexión
@@ -133,32 +120,17 @@ class Multiplayer {
             <strong>ID del Host:</strong> ${this.localPeerId}<br>
             <strong>Código de Sala:</strong> ${this.roomCode}
         `;
-        info.style.marginBottom = '20px';
-        info.style.wordBreak = 'break-all';
         content.appendChild(info);
         
         // Placeholder para el QR (en una implementación real, aquí iría el código QR)
         const qrPlaceholder = document.createElement('div');
-        qrPlaceholder.style.width = '200px';
-        qrPlaceholder.style.height = '200px';
-        qrPlaceholder.style.backgroundColor = '#fff';
-        qrPlaceholder.style.margin = '0 auto 20px';
-        qrPlaceholder.style.display = 'flex';
-        qrPlaceholder.style.alignItems = 'center';
-        qrPlaceholder.style.justifyContent = 'center';
-        qrPlaceholder.style.color = '#000';
+        qrPlaceholder.className = 'qr-placeholder';
         qrPlaceholder.textContent = 'Código QR';
         content.appendChild(qrPlaceholder);
         
         // Botón para cerrar
         const closeButton = document.createElement('button');
         closeButton.textContent = 'Cerrar';
-        closeButton.style.padding = '8px 16px';
-        closeButton.style.backgroundColor = '#444';
-        closeButton.style.color = 'white';
-        closeButton.style.border = 'none';
-        closeButton.style.borderRadius = '3px';
-        closeButton.style.cursor = 'pointer';
         
         closeButton.addEventListener('click', () => {
             document.body.removeChild(modal);
@@ -211,11 +183,11 @@ class Multiplayer {
                 this.localPeerId = id;
                 this.displayId = this.generateDisplayId(); // Generar ID corto para mostrar
                 
-                // Mostrar el ID corto en la UI en lugar del ID largo
-                document.getElementById('peer-id-input').value = this.localPeerId;
-                
-                // Añadir tooltip para mostrar el ID completo al pasar el mouse
+                // Mostrar el ID largo en la UI (ahora será visible gracias a los estilos)
                 const peerIdInput = document.getElementById('peer-id-input');
+                peerIdInput.value = this.localPeerId;
+                
+                // Añadir tooltip con información adicional
                 peerIdInput.title = `ID completo: ${id}\nID corto: ${this.displayId}`;
                 
                 console.log('Peer abierto con id:', id);
