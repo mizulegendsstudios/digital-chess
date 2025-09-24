@@ -80,4 +80,5 @@ class DayNightCycle {
     }
 }
 
-export { DayNightCycle };
+// Hacer la clase disponible globalmente
+window.DayNightCycle = DayNightCycle;
