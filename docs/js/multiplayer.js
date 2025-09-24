@@ -89,6 +89,7 @@ class Multiplayer {
             this.updateConnectionStatus('error', 'Error de conexión');
         });
         
+        // Actualizar UI inmediatamente al establecer la conexión
         this.refreshConnectionUI();
     }
     
@@ -142,6 +143,8 @@ class Multiplayer {
             case 'full-state':
                 // cliente sincroniza estado completo (autoritativo del host)
                 this.applyFullState(data.state);
+                // IMPORTANTE: Actualizar el estado de conexión después de recibir el estado completo
+                this.updateConnectionStatus('connected', 'Conectado');
                 break;
                 
             case 'request-move':
