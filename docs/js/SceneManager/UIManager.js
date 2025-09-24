@@ -19,4 +19,5 @@ class UIManager {
     }
 }
 
-export { UIManager };
+// Hacer la clase disponible globalmente
+window.UIManager = UIManager;
