@@ -7,6 +7,10 @@ const scriptsToLoad = [
     'js/config.js',
     'js/styles.js',
     'js/body-content.js',
+    'js/SceneManager/LightingManager.js',
+    'js/SceneManager/SkyboxManager.js',
+    'js/SceneManager/UIManager.js',
+    'js/SceneManager/DayNightCycle.js',
     'js/sceneManager.js',
     'js/boardBuilder.js',
     'js/pieceFactory.js',
@@ -48,4 +52,6 @@ function loadScript(src) {
 }
 
 // Exportar las funciones necesarias
-export { scriptsToLoad, loadScriptsSequentially, loadScript };
+window.scriptsToLoad = scriptsToLoad;
+window.loadScriptsSequentially = loadScriptsSequentially;
+window.loadScript = loadScript;
