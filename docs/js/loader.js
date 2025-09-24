@@ -80,6 +80,9 @@ async function initGame() {
         // Inyectar estilos y contenido del cuerpo
         injectStylesAndContent();
         
+        // Esperar un poco a que el DOM se actualice
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         // Verificar que la clase Game esté disponible
         if (typeof Game === 'undefined') {
             throw new Error('La clase Game no está definida');
