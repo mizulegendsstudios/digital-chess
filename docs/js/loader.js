@@ -46,7 +46,7 @@ function loadScript(src) {
     });
 }
 
-// Función para inyectar estilos y contenido del cuerpo
+// Cargar estilos y contenido del cuerpo
 function injectStylesAndContent() {
     console.log('Inyectando estilos y contenido...');
     
