@@ -1,4 +1,4 @@
-// Variables para controles
+// Variables para controles-
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let keys = {};
