@@ -49,4 +49,5 @@ class SkyboxManager {
     }
 }
 
-export { SkyboxManager };
+// Hacer la clase disponible globalmente
+window.SkyboxManager = SkyboxManager;
