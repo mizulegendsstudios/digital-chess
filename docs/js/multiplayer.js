@@ -12,6 +12,7 @@ class Multiplayer {
         this.roomCode = null;
         this.connections = {}; // peerId => DataConnection
         this.localPeerId = null;
+        this.displayId = null; // ID corto para mostrar en la UI
         this.myRoleLocal = 'spectator'; // 'white' | 'black' | 'spectator'
         
         this.init();
@@ -21,6 +22,180 @@ class Multiplayer {
         // Eventos de multijugador
         document.getElementById('create-room-button').addEventListener('click', () => this.onCreateRoom());
         document.getElementById('join-room-button').addEventListener('click', () => this.onJoinRoom());
+        
+        // Mejorar la UI para facilitar la conexión
+        this.improveConnectionUI();
+    }
+    
+    // Método para mejorar la UI de conexión
+    improveConnectionUI() {
+        // Añadir un botón para copiar el ID al portapapeles
+        const peerIdGroup = document.querySelector('#peer-id-input').parentNode;
+        
+        const copyButton = document.createElement('button');
+        copyButton.textContent = 'Copiar';
+        copyButton.style.marginLeft = '5px';
+        copyButton.style.padding = '5px 10px';
+        copyButton.style.backgroundColor = '#444';
+        copyButton.style.color = 'white';
+        copyButton.style.border = 'none';
+        copyButton.style.borderRadius = '3px';
+        copyButton.style.cursor = 'pointer';
+        
+        copyButton.addEventListener('click', () => {
+            const peerIdInput = document.getElementById('peer-id-input');
+            peerIdInput.select();
+            document.execCommand('copy');
+            
+            // Cambiar texto del botón temporalmente para indicar que se copió
+            const originalText = copyButton.textContent;
+            copyButton.textContent = '¡Copiado!';
+            setTimeout(() => {
+                copyButton.textContent = originalText;
+            }, 2000);
+        });
+        
+        peerIdGroup.appendChild(copyButton);
+        
+        // Hacer que el campo de ID del host sea más grande y con mejor tooltip
+        const hostIdInput = document.getElementById('host-id-input');
+        hostIdInput.title = 'Pega aquí el ID completo del host';
+        hostIdInput.style.width = '100%';
+        
+        // Mejorar el campo del código de sala
+        const roomCodeInput = document.getElementById('room-code-input');
+        roomCodeInput.title = 'Ingresa el código de sala de 5 caracteres';
+        roomCodeInput.style.width = '100%';
+        roomCodeInput.style.textTransform = 'uppercase';
+        
+        // Añadir evento para convertir automáticamente a mayúsculas
+        roomCodeInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+        
+        // Añadir botón para generar un código QR con la información de conexión
+        const qrButton = document.createElement('button');
+        qrButton.textContent = 'Mostrar QR';
+        qrButton.style.marginTop = '10px';
+        qrButton.style.padding = '5px 10px';
+        qrButton.style.backgroundColor = '#444';
+        qrButton.style.color = 'white';
+        qrButton.style.border = 'none';
+        qrButton.style.borderRadius = '3px';
+        qrButton.style.cursor = 'pointer';
+        qrButton.style.width = '100%';
+        
+        qrButton.addEventListener('click', () => this.showConnectionQR());
+        
+        document.getElementById('connection-controls').appendChild(qrButton);
+    }
+    
+    // Método para mostrar un código QR con la información de conexión
+    showConnectionQR() {
+        if (!this.localPeerId || !this.roomCode) {
+            alert('Primero crea una sala para generar el código QR');
+            return;
+        }
+        
+        // Crear un modal para mostrar el QR
+        const modal = document.createElement('div');
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        modal.style.display = 'flex';
+        modal.style.flexDirection = 'column';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.zIndex = '10000';
+        
+        // Contenido del modal
+        const content = document.createElement('div');
+        content.style.backgroundColor = '#333';
+        content.style.padding = '20px';
+        content.style.borderRadius = '10px';
+        content.style.maxWidth = '400px';
+        content.style.width = '90%';
+        content.style.textAlign = 'center';
+        content.style.color = 'white';
+        
+        // Título
+        const title = document.createElement('h2');
+        title.textContent = 'Código de Conexión';
+        title.style.marginTop = '0';
+        content.appendChild(title);
+        
+        // Información de conexión
+        const info = document.createElement('p');
+        info.innerHTML = `
+            <strong>ID del Host:</strong> ${this.localPeerId}<br>
+            <strong>Código de Sala:</strong> ${this.roomCode}
+        `;
+        info.style.marginBottom = '20px';
+        info.style.wordBreak = 'break-all';
+        content.appendChild(info);
+        
+        // Placeholder para el QR (en una implementación real, aquí iría el código QR)
+        const qrPlaceholder = document.createElement('div');
+        qrPlaceholder.style.width = '200px';
+        qrPlaceholder.style.height = '200px';
+        qrPlaceholder.style.backgroundColor = '#fff';
+        qrPlaceholder.style.margin = '0 auto 20px';
+        qrPlaceholder.style.display = 'flex';
+        qrPlaceholder.style.alignItems = 'center';
+        qrPlaceholder.style.justifyContent = 'center';
+        qrPlaceholder.style.color = '#000';
+        qrPlaceholder.textContent = 'Código QR';
+        content.appendChild(qrPlaceholder);
+        
+        // Botón para cerrar
+        const closeButton = document.createElement('button');
+        closeButton.textContent = 'Cerrar';
+        closeButton.style.padding = '8px 16px';
+        closeButton.style.backgroundColor = '#444';
+        closeButton.style.color = 'white';
+        closeButton.style.border = 'none';
+        closeButton.style.borderRadius = '3px';
+        closeButton.style.cursor = 'pointer';
+        
+        closeButton.addEventListener('click', () => {
+            document.body.removeChild(modal);
+        });
+        
+        content.appendChild(closeButton);
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+        
+        // Cerrar al hacer clic fuera del contenido
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        });
+    }
+    
+    // Método para generar un ID de usuario corto y legible
+    generateDisplayId(length = 8) {
+        // Usar solo caracteres fáciles de distinguir
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let result = '';
+        for (let i = 0; i < length; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    }
+    
+    // Método para generar un código de sala corto y legible
+    generateRoomCode(length = 5) {
+        // Usar solo caracteres fáciles de distinguir (excluimos 0, O, 1, I, etc.)
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let result = '';
+        for (let i = 0; i < length; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
     }
     
     async initializePeer() {
@@ -34,8 +209,17 @@ class Multiplayer {
             
             this.peer.once('open', id => {
                 this.localPeerId = id;
-                document.getElementById('peer-id-input').value = id;
+                this.displayId = this.generateDisplayId(); // Generar ID corto para mostrar
+                
+                // Mostrar el ID corto en la UI en lugar del ID largo
+                document.getElementById('peer-id-input').value = this.localPeerId;
+                
+                // Añadir tooltip para mostrar el ID completo al pasar el mouse
+                const peerIdInput = document.getElementById('peer-id-input');
+                peerIdInput.title = `ID completo: ${id}\nID corto: ${this.displayId}`;
+                
                 console.log('Peer abierto con id:', id);
+                console.log('ID de usuario para mostrar:', this.displayId);
                 resolve(id);
             });
             
@@ -397,13 +581,16 @@ class Multiplayer {
         try {
             await this.initializePeer();
             this.isHost = true;
-            this.roomCode = Math.random().toString(36).substring(2,8).toUpperCase();
+            // Usar el nuevo método para generar un código más corto
+            this.roomCode = this.generateRoomCode(5); // 5 caracteres
             document.getElementById('room-code-display').textContent = this.roomCode;
             document.getElementById('room-info').style.display = 'block';
             this.updateConnectionStatus('connecting', 'Esperando jugador...');
             this.myRoleLocal = 'white';
             this.updatePlayerRole('white');
-            console.log('Sala creada. Peer ID:', this.localPeerId, 'Room code:', this.roomCode);
+            console.log('Sala creada. Peer ID:', this.localPeerId);
+            console.log('ID de usuario para mostrar:', this.displayId);
+            console.log('Room code:', this.roomCode);
         } catch(err) {
             console.error('Error initializing peer for host', err);
             this.updateConnectionStatus('error', 'No se pudo inicializar Peer');
@@ -423,6 +610,9 @@ class Multiplayer {
             await this.initializePeer();
             this.roomCode = code;
             this.isHost = false;
+            
+            // NOTA: Seguimos usando el ID largo de PeerJS para la conexión,
+            // pero mostramos el ID corto en la UI
             
             // conectar al host con metadata conteniendo código de sala solicitado
             const conn = this.peer.connect(hostPeerId, { metadata: { roomCode: code } });
