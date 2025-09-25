@@ -52,6 +52,4 @@ function loadScript(src) {
 }
 
 // Exportar las funciones necesarias
-window.scriptsToLoad = scriptsToLoad;
-window.loadScriptsSequentially = loadScriptsSequentially;
-window.loadScript = loadScript;
+export { scriptsToLoad, loadScriptsSequentially, loadScript };
